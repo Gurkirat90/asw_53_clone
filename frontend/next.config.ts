@@ -9,13 +9,20 @@ const apiInternalBaseUrl = (process.env.API_INTERNAL_BASE_URL ?? "http://127.0.0
 );
 
 const nextConfig: NextConfig = {
+  // Separate build output for the Playwright run (.next-e2e) so it never clobbers .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiInternalBaseUrl}/api/:path*`,
-      },
-    ];
+    return {
+      // beforeFiles: /api/* is proxied before any page (including the console catch-all) matches.
+      beforeFiles: [
+        {
+          source: "/api/:path*",
+          destination: `${apiInternalBaseUrl}/api/:path*`,
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    };
   },
 };
 

@@ -12,7 +12,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "echo 'E2E tests are not implemented until PROMPT 04 (Playwright)' && exit 1"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@cloudscape-design/components": "3.0.1396",
@@ -23,6 +23,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",

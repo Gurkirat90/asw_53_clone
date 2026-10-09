@@ -14,8 +14,10 @@ data persisted in SQLite through a FastAPI API.
 **Current status (Phase 03, hosted zone and record APIs):** the complete backend: SQLite schema
 and migrations, mock session authentication, and the owner-scoped REST API for hosted zones and
 DNS records (A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA) with validation, system NS/SOA records,
-search, filters, sorting, and pagination. The frontend is still the Phase 01 smoke page; the
-console UI arrives in later phases. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+search, filters, sorting, and pagination. Phase 04 adds the frontend foundation: the Route 53-style
+console shell (top bar, side navigation, breadcrumbs, notifications), mock sign-in/sign-out with
+route protection, Coming soon pages, and the typed API client. The hosted zone and record screens
+arrive in PROMPTS 05 and 06 (`/hosted-zones` is a temporary placeholder until then). Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Tech stack
 
@@ -107,8 +109,16 @@ make backend-run
 make frontend-run
 ```
 
-Then open http://localhost:3000. The API is at http://127.0.0.1:8000 (OpenAPI docs at `/docs` in
-development), and `http://localhost:3000/api/v1/...` is proxied to it.
+Then open http://localhost:3000 and sign in with `DEMO_USER_EMAIL` (default `demo@example.test`)
+and the `DEMO_USER_PASSWORD` you set in `backend/.env`. The API is at http://127.0.0.1:8000
+(OpenAPI docs at `/docs` in development), and `http://localhost:3000/api/v1/...` is proxied to it.
+
+How sign-in works: the login form posts to `/api/v1/auth/login`, which sets the HttpOnly
+`route53_session` cookie (JavaScript can never read it). A Next.js proxy (`frontend/proxy.ts`)
+sends visitors without that cookie to `/login?next=...`; inside the console, `GET /api/v1/auth/me`
+decides whether the session is valid, so a stale cookie still ends on the login page. Any 401
+from the API clears client state and returns to `/login` once (no redirect loops). Sign out
+revokes the session on the server.
 
 ## Commands
 
@@ -126,7 +136,7 @@ development), and `http://localhost:3000/api/v1/...` is proxied to it.
 | `make frontend-typecheck` | `tsc --noEmit` | Working |
 | `make frontend-test` | Vitest | Working |
 | `make frontend-build` | `next build` | Working |
-| `make e2e` | Playwright end-to-end tests | Not implemented until PROMPT 04 (exits 1) |
+| `make e2e` | Playwright end-to-end tests against an isolated backend and DB (see Testing) | Working |
 | `make test` | `backend-test` + `frontend-test` | Working |
 | `make check` | All lint, typecheck, unit tests, and the frontend build | Working |
 
@@ -146,7 +156,21 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
   and cross-zone 404s, search/filter/sort/pagination, cascade deletes, rollback on failure,
   persistence across app instances, no N+1 queries), and the shared DNS validation fixture
   `shared/dns-validation-cases.json`, which the frontend will run too.
-- Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/`).
+- Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/unit/`): the API client
+  (envelope parsing, 204, query serialization, network errors, one-shot 401 handling), error
+  mapping, URL list state, debounce, the confirmation modal (typed confirmation, focus), the login
+  form (validation, generic 401, safe `next`), navigation highlighting, notifications, and states.
+- End-to-end: `make e2e` runs Playwright (`frontend/tests/e2e/`). It needs Chromium once:
+  `cd frontend && npx playwright install chromium`. Playwright starts its own stack and never
+  reuses dev servers or the developer DB:
+  - `tests/e2e/start-backend.sh`: FastAPI on 127.0.0.1:8001 with a fresh temporary SQLite file
+    (migrated, demo user seeded with the test-only password `e2e-demo-password`, overridable via
+    `E2E_DEMO_PASSWORD`), deleted when the run ends.
+  - The frontend: a production build into `frontend/.next-e2e` (so `.next` is untouched) served on
+    127.0.0.1:3001 with its `/api` rewrite pointed at :8001. Rewrites are fixed at build time,
+    which is why the E2E run builds its own copy.
+  - Every test fails on any browser console error or page error, except Chrome's
+    "Failed to load resource ... 401" lines for expected API 401s (session probe, wrong password).
 - CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
   push to `main` and on pull requests.
 

@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 // is required.
 import "@cloudscape-design/global-styles/index.css";
 
+import { Providers } from "./providers";
+
 export const metadata: Metadata = {
   title: process.env.NEXT_PUBLIC_APP_NAME ?? "Route 53 Clone",
   description: "A functional simulation of the AWS Route 53 console. It does not serve DNS.",
@@ -13,7 +15,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

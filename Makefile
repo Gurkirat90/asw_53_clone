@@ -61,8 +61,8 @@ frontend-test: ## Run Vitest
 frontend-build: ## Production build of the frontend
 	cd "$(FRONTEND_DIR)" && npm run build
 
-e2e: ## Playwright end-to-end tests (PROMPT 04)
-	@echo "make e2e: not implemented until PROMPT 04" >&2; exit 1
+e2e: ## Playwright E2E against an isolated backend (:8001, temp DB) and frontend build (:3001)
+	cd "$(FRONTEND_DIR)" && npm run test:e2e
 
 test: backend-test frontend-test ## Backend and frontend unit tests
 
