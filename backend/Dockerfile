@@ -27,6 +27,5 @@ ENV APP_ENV=production \
     PORT=8000
 
 EXPOSE 8000
-VOLUME ["/data"]
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
