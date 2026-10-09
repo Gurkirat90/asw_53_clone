@@ -21,6 +21,12 @@ import { safeNextPath } from "@/lib/auth/next";
 
 const AUTH_FAILED_MESSAGE = "Sign-in failed. Check your credentials.";
 
+// Optional, set per deployment (build time) so reviewers can sign in. Never hardcoded: the demo
+// password is a deployment setting chosen to be shareable, not a secret.
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? "";
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? "";
+const HAS_DEMO_CREDENTIALS = DEMO_EMAIL !== "" && DEMO_PASSWORD !== "";
+
 interface FieldErrors {
   email?: string;
   password?: string;
@@ -147,10 +153,42 @@ export function LoginForm() {
                       disabled={signIn.isPending}
                     />
                   </FormField>
-                  <Alert type="info" statusIconAriaLabel="Info">
-                    Demo console. Sign in with the demo credentials from the README. No AWS account
-                    is used and changes stay in this application&apos;s database.
-                  </Alert>
+                  {HAS_DEMO_CREDENTIALS ? (
+                    <Alert
+                      type="info"
+                      statusIconAriaLabel="Info"
+                      header="Demo credentials"
+                      action={
+                        <Button
+                          formAction="none"
+                          onClick={() => {
+                            setEmail(DEMO_EMAIL);
+                            setPassword(DEMO_PASSWORD);
+                            setFieldErrors({});
+                          }}
+                          disabled={signIn.isPending}
+                        >
+                          Use demo credentials
+                        </Button>
+                      }
+                    >
+                      <div>
+                        Email: <strong>{DEMO_EMAIL}</strong>
+                      </div>
+                      <div>
+                        Password: <strong>{DEMO_PASSWORD}</strong>
+                      </div>
+                      <Box variant="small" color="text-body-secondary" margin={{ top: "xs" }}>
+                        Demo console. No AWS account is used and changes stay in this
+                        application&apos;s database.
+                      </Box>
+                    </Alert>
+                  ) : (
+                    <Alert type="info" statusIconAriaLabel="Info">
+                      Demo console. Sign in with the demo credentials from the README. No AWS account
+                      is used and changes stay in this application&apos;s database.
+                    </Alert>
+                  )}
                 </SpaceBetween>
               </Form>
             </form>

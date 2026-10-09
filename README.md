@@ -1,235 +1,292 @@
 # Fiftythree
 
-## Overview
-
 A functional simulation of the AWS Route 53 web console, built for the Scaler SDE Fullstack
 assignment ([PDF](docs/assignment/Scaler_SDE_Fullstack_Assignment_-_AWS_Route53_Clone.pdf)). It
 reproduces the console's look, navigation, and core hosted-zone and DNS-record workflows, with
-data persisted in SQLite through a FastAPI API.
+real CRUD persisted in SQLite through a FastAPI API.
 
-> **This is a simulation, not a DNS service.** It never answers DNS queries, publishes or
-> propagates records, contacts AWS, provisions resources, or implements real IAM, Organizations, or
-> billing. Login is a local mock.
+> **Simulation only.** Fiftythree never answers DNS queries, publishes or propagates records,
+> delegates domains, contacts AWS, provisions resources, or implements real IAM, Organizations,
+> or billing. Name servers shown for a zone are synthetic `.invalid` hosts. Login is a local mock.
 
-**Current status (Phase 03, hosted zone and record APIs):** the complete backend: SQLite schema
-and migrations, mock session authentication, and the owner-scoped REST API for hosted zones and
-DNS records (A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA) with validation, system NS/SOA records,
-search, filters, sorting, and pagination. Phase 04 adds the frontend foundation: the Route 53-style
-console shell (top bar, side navigation, breadcrumbs, notifications), mock sign-in/sign-out with
-route protection, Coming soon pages, and the typed API client. Phase 05 adds the hosted zone
-workflows: the zones list (search, Type filter, sorting, pagination, page size, all in the URL),
-create, edit description, delete with typed confirmation, and the zone detail page with a
-read-only records table. Phase 06 completes DNS record management for all nine types (A, AAAA,
-CNAME, TXT, MX, NS, PTR, SRV, CAA): search, Type and Routing policy filters, sorting, pagination,
-a record details panel, type-specific create/edit forms with field-level validation that matches
-the server, deletion with confirmation, and view-only system NS/SOA records. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+Requirements: [docs/PRD.md](docs/PRD.md) · Decisions: [docs/DECISIONS.md](docs/DECISIONS.md) ·
+Completion report: [docs/COMPLETION_REPORT.md](docs/COMPLETION_REPORT.md)
+
+## Hosted demo
+
+**URL: PENDING** (see [Deployment](#deployment); the app is ready to deploy, but no hosting
+account is connected from this machine).
+
+Demo sign-in on the hosted demo: email `demo@example.test` with the demo password set for that
+deployment (`DEMO_USER_PASSWORD`). The login page shows both when the deployment sets
+`NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD`. Locally, the password is whatever you put
+in `backend/.env`.
+
+## Features
+
+- **Console shell:** dark top navigation, collapsible side navigation (Dashboard, Hosted zones,
+  Health checks, Profiles, Traffic policies, Resolver), breadcrumbs, one notification bar, demo
+  account menu with sign-out. Dashboard, Health checks, Traffic policies, Resolver, and Profiles
+  are "Coming soon" pages.
+- **Mock authentication:** sign in / sign out with a seeded demo user; server-side sessions in an
+  HttpOnly cookie; refresh keeps you signed in; expired sessions return you to the login page.
+- **Hosted zones:** list with server-side search (name or description), Type filter, sorting,
+  pagination, and page size, all kept in the URL; create (public or simulated private) with
+  validation; zone details with synthetic name servers; edit the description; delete with typed
+  confirmation. Each new zone gets protected default NS and SOA records.
+- **DNS records** for A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, and CAA: list with search by name,
+  type, or value, Type and Routing policy filters, sorting, pagination; a details panel;
+  type-specific create/edit forms (multi-value lists, structured MX/SRV/CAA rows, TTL presets);
+  in-place edits; delete with confirmation. Duplicate record sets, CNAME at the apex, CNAME
+  coexistence, and out-of-zone names are rejected. Default NS/SOA records are view-only.
+- Validation runs on both sides with identical rules (pinned by a shared test fixture); errors
+  appear on the exact field or value row.
+
+### Limitations / out of scope
+
+Real DNS resolution, propagation, delegation, domain registration, health checks, traffic flow,
+DNSSEC, query logging, IAM, billing, alias records, non-simple routing policies, tags, and VPC
+association are not implemented. Only one demo user exists. Optional bonus features (import,
+export, bulk delete, dark mode, keyboard shortcuts) are not implemented yet.
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 (App Router), React 19, TypeScript (strict), Cloudscape Design System (Visual Refresh), TanStack Query v5 |
-| Backend | Python 3.12, FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2.x, Alembic, argon2-cffi |
-| Database | SQLite (single file, foreign keys enforced) |
-| Tooling | ESLint, `tsc`, Vitest + React Testing Library, ruff, pytest + httpx, GitHub Actions |
+| Frontend | Next.js 16.4 (App Router), React 19.3, TypeScript 5.9 (strict), Cloudscape Design System 3 (Visual Refresh), TanStack Query 5 |
+| Backend | Python 3.12, FastAPI 0.143, Pydantic 2.14, pydantic-settings, SQLAlchemy 2.1, Alembic 1.20, argon2-cffi |
+| Database | SQLite (one file, foreign keys enforced, Alembic migrations) |
+| Tests | pytest + httpx, Vitest + React Testing Library, Playwright + axe-core |
+| Tooling | ruff, ESLint, `tsc`, GitHub Actions, Docker |
 
 ## Repository layout
 
 ```text
 .
-├── backend/              FastAPI app (app/), Alembic migrations (alembic/), requirements*.txt
-├── frontend/             Next.js App Router app (app/), tests/, package.json + lockfile
-├── shared/               Cross-stack test fixtures (from PROMPT 03)
-├── docs/                 PRD.md, DECISIONS.md, assignment/ (source PDF/DOCX)
-├── .github/workflows/    ci.yml
-├── Makefile              Developer commands
-├── .editorconfig
-└── .gitignore
+├── backend/            FastAPI app (app/), Alembic (alembic/), Dockerfile, scripts/ (perf check)
+├── frontend/           Next.js app (app/, components/, lib/), tests/unit, tests/e2e
+├── shared/             dns-validation-cases.json (run by both test suites)
+├── docs/               PRD, API, DATABASE, ARCHITECTURE, DECISIONS, VISUAL_QA, COMPLETION_REPORT, screenshots/
+├── scripts/            verify-restart-persistence.sh
+├── render.yaml         Render blueprint for the backend (Docker + persistent disk)
+├── Makefile            all developer commands
+└── .github/workflows/  CI: backend, frontend, end-to-end
 ```
 
 ## Prerequisites
 
-- Python 3.12+ (`python3.12` on PATH; override with `make setup PYTHON=python3.13`)
-- Node.js 22 LTS (see `frontend/.nvmrc`; `engines.node` is `>=22.13.0`) and npm
-- GNU Make
+- Python 3.12+ (`python3.12` on PATH, or `make setup PYTHON=python3.13`)
+- Node.js 22 LTS with its bundled npm 10 (`frontend/.nvmrc`)
+- GNU Make, curl; Docker only if you want to build the backend image
 
 ## Local setup
 
-```bash
-make setup
-```
+1. Install dependencies (creates `backend/.venv`, runs `npm ci`):
 
-`make setup` creates `backend/.venv`, installs `backend/requirements-dev.txt`, and runs `npm ci` in
-`frontend/`.
+   ```bash
+   make setup
+   ```
 
-Environment files (placeholders only; never commit real values):
+2. Create the environment files from the examples:
 
-```bash
-cp backend/.env.example backend/.env
-```
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
 
-```bash
-cp frontend/.env.example frontend/.env.local
-```
+   ```bash
+   cp frontend/.env.example frontend/.env.local
+   ```
 
-Edit `backend/.env` and set `DEMO_USER_PASSWORD` to a local password of your choice. It is the
-password for the demo login (`DEMO_USER_EMAIL`, default `demo@example.test`); `.env` is gitignored.
+3. Edit `backend/.env` and set `DEMO_USER_PASSWORD` to a password of your choice (the example
+   value `change-me-locally` also works locally). `.env` files are gitignored.
 
-Create the database schema and the demo user:
+4. Create the database and the demo user:
 
-```bash
-make migrate
-```
+   ```bash
+   make migrate
+   ```
 
-```bash
-make seed
-```
+   ```bash
+   make seed
+   ```
 
-`make migrate` runs `alembic upgrade head` and creates `backend/data/fiftythree.db`. The backend
-refuses to start against a missing or unmigrated database. `make seed` is idempotent: it creates
-the demo user if missing and never changes an existing password unless you run
-`make seed SEED_ARGS=--reset-password`.
+5. Optional: load demo data (three zones, one record of each of the nine types, and twelve extra
+   A records for paging). It does nothing if the demo user already has zones.
 
-Optionally load demo data (requires the demo user):
+   ```bash
+   make seed-demo-data
+   ```
 
-```bash
-make seed-demo-data
-```
+6. Run the backend and the frontend in two terminals:
 
-It creates `example.com` (one record of each of the nine types plus `app-01`…`app-12` A records,
-enough to page through), `example.net`, and the private zone `internal.example.com`, all with
-reserved documentation names and addresses. It does nothing if the demo user already has zones.
+   ```bash
+   make backend-run
+   ```
 
-`API_INTERNAL_BASE_URL` (frontend) is the server-side target of the `/api/*` rewrite. Next.js
-resolves rewrites at **build time**, so set it before `npm run build` when the API is not at
-`http://127.0.0.1:8000`.
+   ```bash
+   make frontend-run
+   ```
 
-Run the two servers in separate terminals:
+7. Open **http://localhost:3000** (use `localhost`, not the "Network" IP Next.js prints) and sign
+   in with `demo@example.test` and your `DEMO_USER_PASSWORD`.
 
-```bash
-make backend-run
-```
-
-```bash
-make frontend-run
-```
-
-Then open http://localhost:3000 and sign in with `DEMO_USER_EMAIL` (default `demo@example.test`)
-and the `DEMO_USER_PASSWORD` you set in `backend/.env`. The API is at http://127.0.0.1:8000
-(OpenAPI docs at `/docs` in development), and `http://localhost:3000/api/v1/...` is proxied to it.
-
-How sign-in works: the login form posts to `/api/v1/auth/login`, which sets the HttpOnly
-`route53_session` cookie (JavaScript can never read it). A Next.js proxy (`frontend/proxy.ts`)
-sends visitors without that cookie to `/login?next=...`; inside the console, `GET /api/v1/auth/me`
-decides whether the session is valid, so a stale cookie still ends on the login page. Any 401
-from the API clears client state and returns to `/login` once (no redirect loops). Sign out
-revokes the session on the server.
+The API runs on http://127.0.0.1:8000 with interactive docs at http://127.0.0.1:8000/docs in
+development. The browser only talks to http://localhost:3000; Next.js proxies `/api/*` to the API.
 
 ## Commands
 
-| Command | Purpose | Status |
-|---|---|---|
-| `make setup` | Create venv, install backend and frontend dependencies | Working |
-| `make migrate` | `alembic upgrade head` against `DATABASE_URL` (creates `backend/data/`) | Working |
-| `make seed` | Create the demo user if missing (`SEED_ARGS=--reset-password` resets its password) | Working |
-| `make seed-demo-data` | Load demo zones and records for the demo user (skips if it already has zones) | Working |
-| `make backend-run` | Uvicorn on 127.0.0.1:8000, single worker, auto-reload | Working |
-| `make frontend-run` | Next.js dev server on port 3000 | Working |
-| `make backend-lint` | `ruff check` + `ruff format --check` | Working |
-| `make backend-test` | `pytest` | Working |
-| `make frontend-lint` | ESLint | Working |
-| `make frontend-typecheck` | `tsc --noEmit` | Working |
-| `make frontend-test` | Vitest | Working |
-| `make frontend-build` | `next build` | Working |
-| `make e2e` | Playwright end-to-end tests against an isolated backend and DB (see Testing) | Working |
-| `make test` | `backend-test` + `frontend-test` | Working |
-| `make check` | All lint, typecheck, unit tests, and the frontend build | Working |
-
-Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
+| Command | Purpose |
+|---|---|
+| `make setup` | Create `backend/.venv`, install backend and frontend dependencies |
+| `make migrate` | `alembic upgrade head` (creates `backend/data/`) |
+| `make seed` | Create the demo user if missing (`make seed SEED_ARGS=--reset-password` resets its password) |
+| `make seed-demo-data` | Load demo zones and records for the demo user (skips if it has zones) |
+| `make backend-run` / `make frontend-run` | API on 127.0.0.1:8000 / web app on port 3000 |
+| `make backend-lint` / `make backend-test` | ruff / pytest |
+| `make frontend-lint` / `make frontend-typecheck` / `make frontend-test` / `make frontend-build` | ESLint / `tsc --noEmit` / Vitest / `next build` |
+| `make e2e` | Playwright end-to-end suite against an isolated backend and database |
+| `make test` | Backend and frontend unit tests |
+| `make check` | All lint, typecheck, unit tests, and the frontend build (what CI runs first) |
+| `make verify-persistence` | Proves data survives a backend restart (temporary database) |
+| `make perf` | Times the list endpoints with 100 zones and 1,000 records (temporary database) |
 
 ## Testing
 
-- Backend: `make backend-test` runs pytest (`backend/app/tests/`). The suite sets `APP_ENV=test`
-  and points `DATABASE_URL` at a temporary SQLite file before the app is imported, migrates it
-  once with Alembic, and empties every table around each test. In test mode `backend/.env` is
-  ignored, and a guard aborts the run if the database resolves to `backend/data/fiftythree.db`.
-  Coverage: migrations (upgrade/downgrade/upgrade, constraints, indexes), foreign keys and
-  cascades, UTC timestamps, login/logout/me (cookie attributes, hashed tokens, expired, revoked,
-  garbage and inactive-user sessions), the error envelope and request IDs, the Origin check,
-  startup refusal on an unmigrated database, `/healthz`, the seed commands, the hosted-zone and
-  record APIs (all nine types, validation paths, conflicts, system-record protection, cross-user
-  and cross-zone 404s, search/filter/sort/pagination, cascade deletes, rollback on failure,
-  persistence across app instances, no N+1 queries), and the shared DNS validation fixture
-  `shared/dns-validation-cases.json`, which the frontend will run too.
-- Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/unit/`): the API client
-  (envelope parsing, 204, query serialization, network errors, one-shot 401 handling), error
-  mapping, URL list state, debounce, the confirmation modal (typed confirmation, focus), the login
-  form (validation, generic 401, safe `next`), navigation highlighting, notifications, states, the
-  hosted zones list/create/edit/delete components, and the zone-name conformance test that runs
-  `shared/dns-validation-cases.json` against `frontend/lib/validation/dns.ts` (every case of every
-  kind), plus the record form for all nine types (editors, exact payloads, per-row errors, server
-  422/409 mapping, double-submit, edit prefill), the records tab, and the record delete dialog.
-- End-to-end: `make e2e` runs Playwright (`frontend/tests/e2e/`). It needs Chromium once:
-  `cd frontend && npx playwright install chromium`. Playwright starts its own stack and never
-  reuses dev servers or the developer DB:
-  - `tests/e2e/start-backend.sh`: FastAPI on 127.0.0.1:8001 with a fresh temporary SQLite file
-    (migrated, demo user seeded with the test-only password `e2e-demo-password`, overridable via
-    `E2E_DEMO_PASSWORD`), deleted when the run ends.
-  - The frontend: a production build into `frontend/.next-e2e` (so `.next` is untouched) served on
-    127.0.0.1:3001 with its `/api` rewrite pointed at :8001. Rewrites are fixed at build time,
-    which is why the E2E run builds its own copy.
-  - Every test fails on any browser console error or page error, except Chrome's
-    "Failed to load resource ... 401" lines for expected API 401s (session probe, wrong password)
-    and API errors a test declares on purpose with `allowApiError(...)` (e.g. a 404 after deleting
-    a zone).
-  - Journeys: sign-in/out, navigation, hosted zones (create, search/filter, edit, delete, invalid
-    input, URL state, not found), and records (one of each type through the UI, search/filter/
-    pagination in the URL, in-place edit, delete, system-record protection, server conflicts,
-    and records gone after the zone is deleted).
-- CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
-  push to `main` and on pull requests.
+- **Backend** (`make backend-test`, 317 tests): auth and sessions, error envelope, migrations,
+  foreign keys and cascades, all hosted-zone and record endpoints for the nine types, validation
+  paths, conflicts, system-record protection, cross-user and cross-zone isolation, persistence
+  across app instances, and the shared validation fixture. The suite uses a temporary SQLite file,
+  ignores `backend/.env`, and refuses to run against any database in `backend/data/`.
+- **Frontend** (`make frontend-test`, Vitest): the API client, URL list state, forms (including
+  every record type's editor and payload), tables, dialogs, and the shared validation fixture run
+  against the client-side validators.
+- **End-to-end** (`make e2e`, Playwright): first run `cd frontend && npx playwright install chromium`.
+  Each run starts its own backend on 127.0.0.1:8001 with a fresh temporary database (deleted
+  afterwards) and a production build of the frontend on 127.0.0.1:3001; your dev servers and data
+  are never used. It covers the ten PRD journeys (sign in/out; create, search, edit, and delete
+  zones; create all nine record types; search, filter, and paginate records; edit; delete), session
+  expiry, accessibility scans (axe), keyboard-only flows, and responsive layouts. Every test fails
+  on an unexpected browser console error.
+- **CI** (`.github/workflows/ci.yml`) runs backend lint and tests, frontend lint, typecheck, tests,
+  and build, and then the Playwright suite.
 
 ## Architecture
 
-Browser → Next.js (same-origin `/api/*` rewrite) → FastAPI → SQLite. Details:
-`docs/ARCHITECTURE.md` (to be written).
+```text
+Browser ──► Next.js (frontend/, port 3000)
+              │  pages + /api/v1/* rewrite (same origin, so the cookie is first-party)
+              ▼
+            FastAPI (backend/, port 8000) ── routers → services → SQLAlchemy ──► SQLite file
+```
+
+- **Same-origin proxy:** the browser calls relative `/api/v1/...` URLs; `next.config.ts` rewrites
+  them to `API_INTERNAL_BASE_URL` (fixed at build time). No CORS is needed.
+- **Auth:** `POST /api/v1/auth/login` sets an HttpOnly `route53_session` cookie holding a random
+  token; the server stores only its SHA-256 hash and checks expiry, revocation, and the user on
+  every request. A Next.js proxy (`frontend/proxy.ts`) sends visitors without the cookie to the
+  login page; inside the console `GET /api/v1/auth/me` is the source of truth.
+- **Layers:** routers (HTTP only) → services (rules, ownership, transactions) → models. The
+  frontend mirrors the validation rules, pinned to the backend by `shared/dns-validation-cases.json`.
+
+Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Database schema
 
-Five tables (`users`, `sessions`, `hosted_zones`, `dns_records`, `record_values`), managed
-exclusively by Alembic migrations. Details: [docs/DATABASE.md](docs/DATABASE.md).
+Five tables, created only by Alembic migrations:
+
+| Table | Purpose | Key constraints |
+|---|---|---|
+| `users` | The demo identity (Argon2id hash) | unique lowercase email |
+| `sessions` | Login sessions (token hash, expiry, revocation) | FK → users, cascade; unique token hash |
+| `hosted_zones` | Zones (public `zone_id`, name, type, comment) | FK → users, cascade; unique `zone_id`; names may repeat |
+| `dns_records` | Record sets (name, type, TTL, system flag) | FK → hosted_zones, cascade; unique (zone, name, type); CHECKs on type/routing/TTL |
+| `record_values` | Ordered values (`value_json` + computed `display_value`) | FK → dns_records, cascade; unique (record, position) |
+
+Deleting a zone removes its records and values in the same statement. Details:
+[docs/DATABASE.md](docs/DATABASE.md).
 
 ## API overview
 
-JSON REST API under `/api/v1` (health check: `GET /healthz`). Full contract, examples, value
-shapes, and validation rules: [docs/API.md](docs/API.md). Interactive OpenAPI docs are served at
-http://127.0.0.1:8000/docs in development.
+JSON REST API under `/api/v1`, plus `GET /healthz`. Full reference: [docs/API.md](docs/API.md).
 
 | Method + path | Purpose |
 |---|---|
-| `POST /api/v1/auth/login` / `POST /api/v1/auth/logout` / `GET /api/v1/auth/me` | Mock session login (HttpOnly cookie), logout, current user |
+| `POST /api/v1/auth/login` · `POST /api/v1/auth/logout` · `GET /api/v1/auth/me` | Sign in (sets the cookie), sign out (revokes), current user |
 | `GET /api/v1/hosted-zones` | List zones (`q`, `zone_type`, `page`, `page_size`, `sort_by`, `sort_order`) |
-| `POST /api/v1/hosted-zones` | Create a zone (with system NS and SOA records) |
-| `GET` / `PATCH` / `DELETE /api/v1/hosted-zones/{zone_id}` | Zone detail, edit comment, delete with all records |
+| `POST /api/v1/hosted-zones` | Create a zone (adds system NS and SOA records) |
+| `GET` · `PATCH` · `DELETE /api/v1/hosted-zones/{zone_id}` | Zone detail, edit description, delete with all records |
 | `GET /api/v1/hosted-zones/{zone_id}/records` | List records (`q`, `record_type`, `routing_policy`, paging, sorting) |
-| `POST /api/v1/hosted-zones/{zone_id}/records` | Create an A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, or CAA record |
-| `GET` / `PATCH` / `DELETE /api/v1/hosted-zones/{zone_id}/records/{record_id}` | Record detail, edit in place, delete (system records are protected) |
+| `POST /api/v1/hosted-zones/{zone_id}/records` | Create a record |
+| `GET` · `PATCH` · `DELETE /api/v1/hosted-zones/{zone_id}/records/{record_id}` | Record detail, edit in place, delete (system records → 409) |
+| `GET /healthz` | `{"status":"ok","database":"ok"}` or 503 |
 
-Every error uses `{"error": {"code", "message", "details": [{"field", "message"}], "request_id"}}`
-and every response carries `X-Request-ID`. Unsafe requests (POST/PUT/PATCH/DELETE) whose `Origin`
-header is not in `TRUSTED_ORIGINS` get `403 FORBIDDEN`.
+Errors always use `{"error": {"code", "message", "details": [{"field", "message"}], "request_id"}}`
+and every response carries `X-Request-ID`.
 
 ## Deployment
 
-To be documented.
+The backend ships as a Docker image with SQLite on a **persistent volume**; the frontend deploys
+to **Vercel** and proxies `/api` to the backend, so the session cookie stays first-party.
 
-## Demo
+### Backend (Docker + persistent volume)
 
-To be added.
+`backend/Dockerfile` (python:3.12-slim, non-root user) runs `backend/docker-entrypoint.sh`, which
+fails fast: it checks that the database directory is writable, runs `alembic upgrade head`, seeds
+the demo user, optionally loads demo data (`SEED_DEMO_DATA=true`), then starts uvicorn with one
+worker on `$PORT` (default 8000).
 
-## Limitations
+Backend environment variables:
 
-- Simulation only: no DNS resolution, propagation, delegation, or AWS integration.
-- Login is mocked for a single seeded demo user.
-- Routing policy is Simple only; alias records, health checks, traffic flow, DNSSEC, and other
-  Route 53 features are out of scope (see [docs/DECISIONS.md](docs/DECISIONS.md), D11).
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` (also disables `/docs` unless `ENABLE_DOCS=true`) |
+| `DATABASE_URL` | `sqlite:////data/fiftythree.db` (the volume is mounted at `/data`) |
+| `SESSION_COOKIE_SECURE` | `true` |
+| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` | `demo@example.test` / a shareable demo password (secret setting) |
+| `TRUSTED_ORIGINS` | the frontend origin, e.g. `https://fiftythree.vercel.app` |
+| `SEED_DEMO_DATA` | `true` to load demo zones on first start (optional) |
+
+**Render** (blueprint in `render.yaml`): New → Blueprint → select this repository. It creates the
+`fiftythree-api` Docker web service from `backend/` with a 1 GB disk at `/data` and the health
+check `/healthz`. Set `DEMO_USER_PASSWORD` and `TRUSTED_ORIGINS` in the dashboard. Persistent
+disks require a paid instance type on Render; the free tier has no disk, so data would be lost on
+every deploy.
+
+**Railway** (alternative): New project → Deploy from GitHub → set the service root directory to
+`backend` (`backend/railway.json` selects the Dockerfile and the `/healthz` check) → add a volume
+mounted at `/data` → set the variables above → generate a public domain. If the volume is not
+writable by the image's non-root user, set `RAILWAY_RUN_UID=0`.
+
+Any other Docker host works the same way: build `backend/`, mount a volume at `/data`, set the
+variables, and expose the port.
+
+### Frontend (Vercel)
+
+New project → import this repository → **Root Directory `frontend`** (framework Next.js; the
+default `npm ci` / `next build` are correct). Environment variables (all read at build time, so
+redeploy after changing them):
+
+| Variable | Value |
+|---|---|
+| `API_INTERNAL_BASE_URL` | the backend URL, e.g. `https://fiftythree-api.onrender.com` (required: the build fails without it on Vercel) |
+| `NEXT_PUBLIC_APP_NAME` | `Fiftythree` |
+| `NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD` | optional: show the demo credentials on the login page (use only the shareable demo password) |
+
+Order: deploy the backend, note its URL, deploy the frontend with `API_INTERNAL_BASE_URL`, then
+set the backend's `TRUSTED_ORIGINS` to the Vercel URL. Both hosts serve HTTPS, which the Secure
+cookie requires. Smoke test: open `<backend>/healthz`, sign in on the Vercel URL, refresh, create
+and delete a zone and a record, redeploy the backend, and confirm the data is still there.
+
+## Data reset and backup
+
+- **Local reset:** stop the backend, delete `backend/data/fiftythree.db` (and its `-wal`/`-shm`
+  files), then `make migrate`, `make seed`, and optionally `make seed-demo-data`.
+- **Deployed backup:** make a consistent copy on the volume from the service shell (the image has
+  Python but no `sqlite3` CLI), then download it:
+  `python -c "import sqlite3; s=sqlite3.connect('/data/fiftythree.db'); d=sqlite3.connect('/data/backup.db'); s.backup(d)"`.
+  There is deliberately no public reset endpoint.
+
+## Optional features
+
+None implemented yet (BIND/JSON import and export, bulk delete, dark mode, and keyboard shortcuts
+are optional bonus scope).

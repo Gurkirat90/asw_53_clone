@@ -1,3 +1,5 @@
+import { request as playwrightRequest } from "@playwright/test";
+
 import { expect, loginAs, signIn, test } from "./fixtures";
 
 test("a signed-out visit to a console page redirects to login with next", async ({ page }) => {
@@ -41,7 +43,7 @@ test("a reload keeps the user signed in", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Demo User/ })).toBeVisible();
 });
 
-test("sign out revokes the session and the old cookie stops working", async ({ page, context }) => {
+test("journey 1: sign in, sign out revokes the session, and the old cookie stops working", async ({ page, context }) => {
   await loginAs(page, "/hosted-zones");
   const oldCookie = (await context.cookies()).find((cookie) => cookie.name === "route53_session");
   expect(oldCookie?.httpOnly).toBe(true);
@@ -68,4 +70,31 @@ test("a stale cookie does not loop: it ends on the login page", async ({ page, c
   await expect(page).toHaveURL("/login?next=%2Fdashboard");
   await signIn(page);
   await expect(page).toHaveURL("/dashboard");
+});
+
+test("an expired session redirects to login once, without a loop", async ({ page, context, baseURL, allowApiError }) => {
+  await loginAs(page, "/hosted-zones");
+  const cookie = (await context.cookies()).find((c) => c.name === "route53_session")!;
+
+  // Expire the session server-side: revoke it from a separate client that holds the same token,
+  // leaving the browser with a cookie the server no longer accepts.
+  const other = await playwrightRequest.newContext({ baseURL, extraHTTPHeaders: { Cookie: `route53_session=${cookie.value}` } });
+  expect((await other.post("/api/v1/auth/logout")).status()).toBe(204);
+  await other.dispose();
+
+  allowApiError(/status of 401/);
+  const loginNavigations: string[] = [];
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame() && new URL(frame.url()).pathname === "/login") loginNavigations.push(frame.url());
+  });
+
+  // The next action hits the API, gets 401, and the central handler sends the user to /login once.
+  await page.getByRole("button", { name: "Refresh hosted zones" }).click();
+  await expect(page).toHaveURL("/login?next=%2Fhosted-zones");
+  await page.waitForTimeout(1000);
+  expect(loginNavigations).toHaveLength(1);
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+
+  await signIn(page);
+  await expect(page).toHaveURL("/hosted-zones");
 });

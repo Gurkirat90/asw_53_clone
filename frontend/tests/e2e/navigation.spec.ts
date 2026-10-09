@@ -9,7 +9,7 @@ const NAV = [
   { link: "Resolver", path: "/resolver", heading: "Resolver", comingSoon: true },
 ];
 
-test("each side navigation item routes, highlights, and sets breadcrumbs", async ({ page }) => {
+test("journey 10: every side navigation item and placeholder page opens with correct breadcrumbs", async ({ page }) => {
   await loginAs(page, "/hosted-zones");
   const sideNav = page.getByRole("navigation", { name: "Route 53 navigation" });
 

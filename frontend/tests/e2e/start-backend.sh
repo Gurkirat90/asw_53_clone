@@ -26,6 +26,8 @@ trap cleanup EXIT INT TERM
 cd "$BACKEND"
 "$PYTHON" -m alembic upgrade head
 "$PYTHON" -m app.cli seed-demo-user
+# Optional: demo zones/records (used for the docs/screenshots capture run).
+if [[ "${E2E_SEED_DEMO_DATA:-0}" == "1" ]]; then "$PYTHON" -m app.cli seed-demo-data; fi
 "$PYTHON" -m uvicorn app.main:app --host 127.0.0.1 --port "$PORT" &
 SERVER_PID=$!
 wait "$SERVER_PID"

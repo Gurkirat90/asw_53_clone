@@ -10,7 +10,7 @@ BACKEND_PY := $(BACKEND_DIR)/.venv/bin/python
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup backend-setup frontend-setup migrate seed seed-demo-data \
+.PHONY: help setup backend-setup frontend-setup migrate seed seed-demo-data verify-persistence perf \
 	backend-run frontend-run backend-test backend-lint frontend-lint frontend-typecheck \
 	frontend-test frontend-build e2e test check
 
@@ -63,6 +63,12 @@ frontend-build: ## Production build of the frontend
 
 e2e: ## Playwright E2E against an isolated backend (:8001, temp DB) and frontend build (:3001)
 	cd "$(FRONTEND_DIR)" && npm run test:e2e
+
+verify-persistence: ## Data survives a backend restart (temporary DB, port 8002)
+	bash "$(CURDIR)/scripts/verify-restart-persistence.sh"
+
+perf: ## Time list endpoints on 100 zones / 1,000 records (temporary DB, port 8003)
+	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m scripts.perf_check
 
 test: backend-test frontend-test ## Backend and frontend unit tests
 
