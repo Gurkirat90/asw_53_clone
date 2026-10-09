@@ -31,9 +31,9 @@ services:
         value: demo@example.test
       - key: DEMO_USER_DISPLAY_NAME
         value: Demo User
-      # Set in the Render dashboard: a shareable demo password (it is shown to reviewers).
+      # Public demo password (also shown in the README and on the login page).
       - key: DEMO_USER_PASSWORD
-        sync: false
+        value: fiftythree-demo
       # Set in the Render dashboard: the frontend origin, e.g. https://fiftythree.vercel.app
       - key: TRUSTED_ORIGINS
         sync: false

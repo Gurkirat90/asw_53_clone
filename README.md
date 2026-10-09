@@ -1,5 +1,13 @@
 # Fiftythree
 
+> **Demo login**
+>
+> - **Email: `demo@example.test`**
+> - **Password: `fiftythree-demo`**
+>
+> The login page also shows these with a **Use demo credentials** button. Hosted demo URL:
+> **PENDING** (see [Deployment](#deployment)).
+
 A functional simulation of the AWS Route 53 web console, built for the Scaler SDE Fullstack
 assignment ([PDF](docs/assignment/Scaler_SDE_Fullstack_Assignment_-_AWS_Route53_Clone.pdf)). It
 reproduces the console's look, navigation, and core hosted-zone and DNS-record workflows, with
@@ -15,12 +23,12 @@ Completion report: [docs/COMPLETION_REPORT.md](docs/COMPLETION_REPORT.md)
 ## Hosted demo
 
 **URL: PENDING** (see [Deployment](#deployment); the app is ready to deploy, but no hosting
-account is connected from this machine).
+account is connected yet).
 
-Demo sign-in on the hosted demo: email `demo@example.test` with the demo password set for that
-deployment (`DEMO_USER_PASSWORD`). The login page shows both when the deployment sets
-`NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD`. Locally, the password is whatever you put
-in `backend/.env`.
+Sign in with **`demo@example.test` / `fiftythree-demo`**. This is a public demo password: the
+backend reads it from `DEMO_USER_PASSWORD`, and the login page shows it (with a "Use demo
+credentials" button) when the frontend is built with `NEXT_PUBLIC_DEMO_EMAIL` and
+`NEXT_PUBLIC_DEMO_PASSWORD`. Both example env files already contain these values.
 
 ## Features
 
@@ -97,8 +105,9 @@ export, bulk delete, dark mode, keyboard shortcuts) are not implemented yet.
    cp frontend/.env.example frontend/.env.local
    ```
 
-3. Edit `backend/.env` and set `DEMO_USER_PASSWORD` to a password of your choice (the example
-   value `change-me-locally` also works locally). `.env` files are gitignored.
+3. The examples already set the demo login to `demo@example.test` / `fiftythree-demo` (backend
+   `DEMO_USER_PASSWORD`; frontend `NEXT_PUBLIC_DEMO_*` for the login-page hint). Change both if you
+   want a different password. `.env` files are gitignored.
 
 4. Create the database and the demo user:
 
@@ -128,7 +137,7 @@ export, bulk delete, dark mode, keyboard shortcuts) are not implemented yet.
    ```
 
 7. Open **http://localhost:3000** (use `localhost`, not the "Network" IP Next.js prints) and sign
-   in with `demo@example.test` and your `DEMO_USER_PASSWORD`.
+   in with **`demo@example.test` / `fiftythree-demo`** (or click **Use demo credentials**).
 
 The API runs on http://127.0.0.1:8000 with interactive docs at http://127.0.0.1:8000/docs in
 development. The browser only talks to http://localhost:3000; Next.js proxies `/api/*` to the API.
@@ -242,13 +251,13 @@ Backend environment variables:
 | `APP_ENV` | `production` (also disables `/docs` unless `ENABLE_DOCS=true`) |
 | `DATABASE_URL` | `sqlite:////data/fiftythree.db` (the volume is mounted at `/data`) |
 | `SESSION_COOKIE_SECURE` | `true` |
-| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` | `demo@example.test` / a shareable demo password (secret setting) |
+| `DEMO_USER_EMAIL` / `DEMO_USER_PASSWORD` | `demo@example.test` / `fiftythree-demo` (public demo password) |
 | `TRUSTED_ORIGINS` | the frontend origin, e.g. `https://fiftythree.vercel.app` |
 | `SEED_DEMO_DATA` | `true` to load demo zones on first start (optional) |
 
 **Render** (blueprint in `render.yaml`): New → Blueprint → select this repository. It creates the
 `fiftythree-api` Docker web service from `backend/` with a 1 GB disk at `/data` and the health
-check `/healthz`. Set `DEMO_USER_PASSWORD` and `TRUSTED_ORIGINS` in the dashboard. Persistent
+check `/healthz`. Set `TRUSTED_ORIGINS` (your Vercel URL) in the dashboard. Persistent
 disks require a paid instance type on Render; the free tier has no disk, so data would be lost on
 every deploy.
 
@@ -270,7 +279,7 @@ redeploy after changing them):
 |---|---|
 | `API_INTERNAL_BASE_URL` | the backend URL, e.g. `https://fiftythree-api.onrender.com` (required: the build fails without it on Vercel) |
 | `NEXT_PUBLIC_APP_NAME` | `Fiftythree` |
-| `NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD` | optional: show the demo credentials on the login page (use only the shareable demo password) |
+| `NEXT_PUBLIC_DEMO_EMAIL` / `NEXT_PUBLIC_DEMO_PASSWORD` | `demo@example.test` / `fiftythree-demo`: shows the credentials and the "Use demo credentials" button on the login page |
 
 Order: deploy the backend, note its URL, deploy the frontend with `API_INTERNAL_BASE_URL`, then
 set the backend's `TRUSTED_ORIGINS` to the Vercel URL. Both hosts serve HTTPS, which the Secure

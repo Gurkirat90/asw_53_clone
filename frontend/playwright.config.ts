@@ -44,6 +44,9 @@ export default defineConfig({
         NEXT_DIST_DIR: ".next-e2e",
         API_INTERNAL_BASE_URL: `http://127.0.0.1:${BACKEND_PORT}`,
         NEXT_TELEMETRY_DISABLED: "1",
+        // The E2E demo password differs from the local one; hide the credentials box in E2E.
+        NEXT_PUBLIC_DEMO_EMAIL: "",
+        NEXT_PUBLIC_DEMO_PASSWORD: "",
       },
     },
   ],
