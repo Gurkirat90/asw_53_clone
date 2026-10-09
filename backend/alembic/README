@@ -1,0 +1,8 @@
+Alembic migrations for the Route 53 Clone backend.
+
+Run from backend/:
+    .venv/bin/alembic upgrade head
+    .venv/bin/alembic revision --autogenerate -m "describe change"
+
+The database URL comes from DATABASE_URL (app.core.config.Settings); alembic.ini does not hold it.
+SQLite migrations use render_as_batch=True. The running app never calls Base.metadata.create_all.

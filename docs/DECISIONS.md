@@ -1,0 +1,49 @@
+# Decisions
+
+This file records fixed project decisions. Change a decision only when it proves impossible:
+make the smallest compatible change, record it under **Deviations** with the reason, and update
+every affected consumer, test, and doc in the same phase.
+
+Requirement sources, in priority order: (1) the assignment
+([PDF](assignment/Scaler_SDE_Fullstack_Assignment_-_AWS_Route53_Clone.pdf)), (2) the
+implementation PRD ([PRD.md](PRD.md)), (3) this file.
+
+## Implementation decisions (D1–D13)
+
+| ID | Decision | Rationale |
+|---|---|---|
+| D1 | Layout: `frontend/`, `backend/`, `shared/` (cross-stack test fixtures), `docs/`, root `README.md`, `Makefile`, `.gitignore`, `.editorconfig`, `.github/workflows/ci.yml`. | The assignment requires `frontend/` and `backend/`; one predictable layout keeps tooling stable across phases. |
+| D2 | Backend: Python 3.12+, FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2.x ORM, Alembic, argon2-cffi (Argon2id), pytest + httpx, ruff. Pinned `requirements.txt` / `requirements-dev.txt`, venv at `backend/.venv`. Package layout `app/{main,cli}.py`, `app/core`, `app/db`, `app/models`, `app/schemas`, `app/api/v1`, `app/services`, `app/tests`. Uvicorn on 127.0.0.1:8000, single worker. | FastAPI is mandated; the supporting libraries are the PRD §13.2 baseline and give typed contracts, reproducible migrations, and safe password hashing. |
+| D3 | Frontend: Next.js App Router (no `src/`), TypeScript strict, npm with committed lockfile and exact versions, Cloudscape components + global styles (Visual Refresh), TanStack Query v5, hand-written validation (no Zod), Vitest + RTL (+ Cloudscape test-utils), Playwright E2E. Dev server on 3000. API types in `lib/api/types.ts`, one fetch client in `lib/api/client.ts`. | Next.js + TS are mandated; Cloudscape is the closest available match to the AWS console; exact pins make builds reproducible. |
+| D4 | Same-origin API: the browser only calls relative `/api/v1/...`; `next.config` rewrites `/api/:path*` to `${API_INTERNAL_BASE_URL}/api/:path*` (default `http://127.0.0.1:8000`). No CORS normally; `CORS_ALLOWED_ORIGINS` empty unless a deployment needs it, never a wildcard with credentials. | Avoids credentialed CORS and cross-site cookie problems (PRD D-008). |
+| D5 | Mock auth: one demo user seeded from env; login issues a `secrets`-generated opaque token, only its SHA-256 hash is stored; cookie `route53_session` (HttpOnly, SameSite=Lax, Path=/, Max-Age=`SESSION_TTL_SECONDS`, Secure when configured). Every request is validated server-side; logout revokes and clears. No JWT, sign-up, or localStorage auth. Unsafe requests with an untrusted `Origin` get 403. | Revocable, refresh-persistent sessions without real IAM; Origin check is a CSRF guard for cookie auth (PRD D-003). |
+| D6 | Tables `users`, `sessions`, `hosted_zones`, `dns_records`, `record_values`; TEXT UUID PKs; ISO 8601 UTC text timestamps; `PRAGMA foreign_keys=ON` per connection; cascading deletes down the ownership chain. Schema changes only via Alembic; the app never calls `create_all`. | Matches PRD §14; Alembic keeps schema reproducible; cascades keep deletes atomic. |
+| D7 | Hosted zones: public `zone_id` = `"Z"` + 20 uppercase alphanumerics, used in all API paths/URLs. Names normalized; duplicates allowed. `name`/`zone_type` immutable, only `comment` (≤1000) editable. `record_count` counts all records incl. system ones. Zone creation also creates system NS + SOA (`.invalid` hosts) in one transaction. | Resembles Route 53 IDs and semantics without implying real delegation (PRD D-004, D-005, D-006). |
+| D8 | Records: SIMPLE routing only; user types A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA; SOA only as a system record. Unique by (zone, name, type). Ordered `record_values` with typed `value_json`; backend computes `display_value`. System records are read-only (409 `SYSTEM_RECORD_PROTECTED`). TTL 0..2147483647, default 300. | Covers the assignment's record types with one authoritative formatter and protected system records (PRD D-007). |
+| D9 | API: base `/api/v1`; list envelope `{items, page, page_size, total_items, total_pages}`; page default 1, page_size 20 (1–100); error envelope `{"error":{code,message,details[{field,message}],request_id}}` with dot-path fields and the fixed code set; trimmed case-insensitive search with escaped LIKE wildcards; `X-Request-ID` on every response; `GET /healthz` outside `/api/v1`. | One predictable contract for the frontend client and tests. |
+| D10 | UI: one Cloudscape AppLayout shell; fixed route map; list state in URL query params named like API params; 300 ms debounced search; filter/page-size changes reset page to 1; page sizes 10/20/50/100; one Flashbar; confirmation modals (zone delete requires typing "delete"); success only after server confirmation; refetch, no optimistic updates; no inert controls; text identity "Route 53 Clone" / "Demo account", no AWS logo assets. | Fidelity to console workflows while staying honest and accessible. |
+| D11 | Out of scope: real DNS, propagation, delegation, domain registration, health probes, traffic flow, DNSSEC, query logging, IAM editor, billing, alias records, non-simple routing, tag management. | The assignment grades console UX and CRUD, not a DNS service. |
+| D12 | Optional bonus (BIND import, JSON/BIND export, bulk delete, dark mode, keyboard shortcuts) only in PROMPT 08 after the mandatory gate passes. | Bonus work must not delay mandatory scope (PRD D-009). |
+| D13 | Root Makefile targets: `setup`, `migrate`, `seed`, `seed-demo-data`, `backend-run`, `frontend-run`, `backend-test`, `backend-lint`, `frontend-lint`, `frontend-typecheck`, `frontend-test`, `frontend-build`, `e2e`, `test`, `check`. Package scripts `dev/build/start/lint/typecheck/test/test:e2e`; backend via `python -m app.cli`, `alembic upgrade head`, `pytest`, `ruff check`. | One command surface for developers and CI (PRD §21.2). |
+
+## PRD decision log (PRD §24.3)
+
+| ID | Decision | Rationale |
+|---|---|---|
+| D-001 | Use Cloudscape as the first-choice UI system. | Best available alignment with AWS console patterns and components. |
+| D-002 | Keep one FastAPI application and one SQLite DB. | Matches assignment scope and reduces operational complexity. |
+| D-003 | Use cookie-backed opaque server-side sessions. | Refresh persistence and logout revocation without real IAM. |
+| D-004 | Zone names may duplicate; IDs are unique. | Separate hosted zones can share a name. |
+| D-005 | Zone name/type are immutable; comment is editable. | Keeps the workflow close to hosted-zone semantics. |
+| D-006 | Seed protected NS/SOA system records with `.invalid` values. | Reproduces the zone model without suggesting real delegation. |
+| D-007 | Simple routing only. | The assignment asks for CRUD of common record types, not complex routing. |
+| D-008 | Same-origin API proxy is preferred. | Reduces credentialed CORS/cookie complexity. |
+| D-009 | BIND import/export, dark mode, shortcuts, bulk operations are P2. | Explicitly optional assignment scope. |
+
+## Deviations
+
+| Date | Affects | Deviation | Reason |
+|---|---|---|---|
+| 2026-10-09 | Project root, Phase 01 docs | Project root is `~/Documents/GitHub/asw_53_clone` (its own git repo, remote `Gurkirat90/asw_53_clone`) instead of `~/Desktop/scalar`. The assignment PDF/DOCX were **copied** (not moved) from `~/Desktop/scalar` into `docs/assignment/`; `PROMPT_PACK.md` stays in `~/Desktop/scalar` and is not part of this repository. | Chosen by the project owner at the start of Phase 01; this folder is the GitHub repository for the project. |
+| 2026-10-09 | `docs/PRD.md` | PRD source was the repository's own `prd.md` (moved to `docs/PRD.md`), not `~/Desktop/ALLO/avaj/javaApps/coupon/prd/final.md`, which does not exist. Only cp1252 mojibake was repaired (curly quotes, `→`, `×`, box-drawing); all ASCII content is unchanged. | Named source path missing; the repository copy is the same PRD. |
+| 2026-10-09 | Frontend toolchain | `frontend/package-lock.json` was generated with npm 11.6.2 (via `npx`), because npm 10.9.2's resolver crashed (`Cannot read properties of null (reading 'edgesOut')`) on the vitest 5 peer set. `npm ci` with npm 10.9.2 installs from the lockfile correctly. ESLint stays on 9.39.5 (as chosen by create-next-app 16.4.0) because eslint-plugin-react compatibility with ESLint 10 is unverified. | Toolchain bug workaround; no change to the D3 stack. |
