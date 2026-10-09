@@ -16,8 +16,10 @@ and migrations, mock session authentication, and the owner-scoped REST API for h
 DNS records (A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA) with validation, system NS/SOA records,
 search, filters, sorting, and pagination. Phase 04 adds the frontend foundation: the Route 53-style
 console shell (top bar, side navigation, breadcrumbs, notifications), mock sign-in/sign-out with
-route protection, Coming soon pages, and the typed API client. The hosted zone and record screens
-arrive in PROMPTS 05 and 06 (`/hosted-zones` is a temporary placeholder until then). Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+route protection, Coming soon pages, and the typed API client. Phase 05 adds the hosted zone
+workflows: the zones list (search, Type filter, sorting, pagination, page size, all in the URL),
+create, edit description, delete with typed confirmation, and the zone detail page with a
+read-only records table. Record create/edit/delete arrives in PROMPT 06. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Tech stack
 
@@ -159,7 +161,9 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
 - Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/unit/`): the API client
   (envelope parsing, 204, query serialization, network errors, one-shot 401 handling), error
   mapping, URL list state, debounce, the confirmation modal (typed confirmation, focus), the login
-  form (validation, generic 401, safe `next`), navigation highlighting, notifications, and states.
+  form (validation, generic 401, safe `next`), navigation highlighting, notifications, states, the
+  hosted zones list/create/edit/delete components, and the zone-name conformance test that runs
+  `shared/dns-validation-cases.json` against `frontend/lib/validation/dns.ts`.
 - End-to-end: `make e2e` runs Playwright (`frontend/tests/e2e/`). It needs Chromium once:
   `cd frontend && npx playwright install chromium`. Playwright starts its own stack and never
   reuses dev servers or the developer DB:
@@ -170,7 +174,11 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
     127.0.0.1:3001 with its `/api` rewrite pointed at :8001. Rewrites are fixed at build time,
     which is why the E2E run builds its own copy.
   - Every test fails on any browser console error or page error, except Chrome's
-    "Failed to load resource ... 401" lines for expected API 401s (session probe, wrong password).
+    "Failed to load resource ... 401" lines for expected API 401s (session probe, wrong password)
+    and API errors a test declares on purpose with `allowApiError(...)` (e.g. a 404 after deleting
+    a zone).
+  - Journeys: sign-in/out, navigation, and hosted zones (create, search/filter, edit, delete,
+    invalid input, URL state, not found).
 - CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
   push to `main` and on pull requests.
 

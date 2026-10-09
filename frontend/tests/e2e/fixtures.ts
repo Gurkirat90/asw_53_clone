@@ -10,19 +10,36 @@ export const DEMO_PASSWORD = process.env.E2E_DEMO_PASSWORD ?? "e2e-demo-password
  */
 const EXPECTED_ERRORS = [/Failed to load resource: the server responded with a status of 401/];
 
-export const test = base.extend<{ consoleErrors: string[] }>({
+export const test = base.extend<{
+  /** Patterns for API errors this test causes on purpose (e.g. a 404 for a deleted zone). */
+  allowedApiErrors: RegExp[];
+  allowApiError: (pattern: RegExp) => void;
+  consoleErrors: string[];
+}>({
+  // Playwright's fixture callback is named `provide` (not `use`) so the React hooks lint rule
+  // does not mistake it for a hook.
+  allowedApiErrors: async ({}, provide) => {
+    await provide([]);
+  },
+  allowApiError: async ({ allowedApiErrors }, provide) => {
+    await provide((pattern) => {
+      allowedApiErrors.push(pattern);
+    });
+  },
   consoleErrors: [
-    async ({ page }, use) => {
+    async ({ page, allowedApiErrors }, provide) => {
       const errors: string[] = [];
       page.on("console", (message) => {
         if (message.type() !== "error") return;
         const text = message.text();
         const url = message.location().url;
-        const expected = EXPECTED_ERRORS.some((pattern) => pattern.test(text)) && url.includes("/api/v1/");
+        const expected =
+          url.includes("/api/v1/") &&
+          [...EXPECTED_ERRORS, ...allowedApiErrors].some((pattern) => pattern.test(`${text} ${url}`));
         if (!expected) errors.push(`${text} (${url})`);
       });
       page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
-      await use(errors);
+      await provide(errors);
       expect(errors, "browser console errors").toEqual([]);
     },
     { auto: true },

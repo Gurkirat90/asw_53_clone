@@ -3,6 +3,9 @@ import { render, type RenderOptions } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { vi } from "vitest";
 
+import { PageChromeProvider } from "@/components/console-shell/PageChrome";
+import { NotificationsFlashbar, NotificationsProvider } from "@/components/feedback/NotificationsProvider";
+
 export function createTestQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } },
@@ -40,4 +43,29 @@ export function mockFetch(routes: Record<string, () => Response | Promise<Respon
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+/** Renders inside the providers a console page needs (query, notifications, page chrome). */
+export function renderConsolePage(ui: ReactElement, options?: { queryClient?: QueryClient }) {
+  return renderWithProviders(
+    <NotificationsProvider>
+      <PageChromeProvider>
+        {ui}
+        <NotificationsFlashbar />
+      </PageChromeProvider>
+    </NotificationsProvider>,
+    options,
+  );
+}
+
+export function page<T>(items: T[], overrides: Partial<{ page: number; page_size: number; total_items: number; total_pages: number }> = {}) {
+  const total = overrides.total_items ?? items.length;
+  const size = overrides.page_size ?? 20;
+  return {
+    items,
+    page: overrides.page ?? 1,
+    page_size: size,
+    total_items: total,
+    total_pages: overrides.total_pages ?? Math.ceil(total / size),
+  };
 }

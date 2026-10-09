@@ -13,6 +13,7 @@ import { NotificationsFlashbar, useNotifications } from "@/components/feedback/N
 import { logout } from "@/lib/api/auth";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useFollowHandler } from "@/lib/hooks/useFollowHandler";
+import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 import { activeNavHref, NAV_HEADER, NAV_ITEMS } from "./navigation";
 import { useShellChrome } from "./PageChrome";
@@ -39,6 +40,9 @@ function TopBar() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { notify } = useNotifications();
+  // On narrow screens TopNavigation folds the search slot behind a search icon, which would turn
+  // this plain label into a misleading control, so it is shown on wider screens only.
+  const wide = useMediaQuery("(min-width: 688px)");
 
   const signOut = useMutation({
     mutationFn: logout,
@@ -58,7 +62,7 @@ function TopBar() {
   return (
     <TopNavigation
       identity={{ title: "Route 53 Clone", href: "/hosted-zones", onFollow: () => router.push("/hosted-zones") }}
-      search={<GlobalRegionIndicator />}
+      search={wide ? <GlobalRegionIndicator /> : undefined}
       utilities={[
         {
           type: "menu-dropdown",
