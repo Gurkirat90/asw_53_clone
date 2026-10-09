@@ -112,8 +112,8 @@ describe("RecordForm editors", () => {
   it("shows Alias and Routing policy disabled with explanations", () => {
     mockFetch({});
     renderForm();
-    expect(screen.getByText("Alias records are not supported in this clone.")).toBeInTheDocument();
-    expect(screen.getByText("Other routing policies are not available in this clone.")).toBeInTheDocument();
+    expect(screen.getByText("Alias records are not supported in Fiftythree.")).toBeInTheDocument();
+    expect(screen.getByText("Other routing policies are not available in Fiftythree.")).toBeInTheDocument();
     expect(createWrapper(document.body).findToggle()!.findNativeInput().getElement()).toBeDisabled();
   });
 });

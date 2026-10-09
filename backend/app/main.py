@@ -42,7 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(settings.LOG_LEVEL)
 
     app = FastAPI(
-        title="Route 53 Clone API",
+        title="Fiftythree API",
         version="0.1.0",
         docs_url="/docs" if settings.docs_enabled else None,
         redoc_url="/redoc" if settings.docs_enabled else None,

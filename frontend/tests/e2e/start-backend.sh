@@ -8,7 +8,7 @@ BACKEND="$ROOT/backend"
 PYTHON="$BACKEND/.venv/bin/python"
 PORT="${E2E_BACKEND_PORT:-8001}"
 FRONTEND_PORT="${E2E_FRONTEND_PORT:-3001}"
-TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/route53-clone-e2e.XXXXXX")"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/fiftythree-e2e.XXXXXX")"
 
 export APP_ENV=test # also makes the backend ignore backend/.env
 export DATABASE_URL="sqlite:///$TMP_DIR/e2e.db"

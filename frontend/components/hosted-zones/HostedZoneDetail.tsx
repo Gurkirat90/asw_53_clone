@@ -33,7 +33,7 @@ function ComingSoonTab({ feature }: { feature: string }) {
     <Container>
       <SpaceBetween size="xs">
         <StatusIndicator type="pending">Coming soon</StatusIndicator>
-        <Box variant="p">{feature} is not part of this clone.</Box>
+        <Box variant="p">{feature} is not part of Fiftythree.</Box>
       </SpaceBetween>
     </Container>
   );

@@ -11,7 +11,7 @@ import StatusIndicator from "@cloudscape-design/components/status-indicator";
 import { usePageChrome } from "@/components/console-shell/PageChrome";
 import { useFollowHandler } from "@/lib/hooks/useFollowHandler";
 
-/** Placeholder for console areas that are outside this clone's functional scope. */
+/** Placeholder for console areas that are outside Fiftythree's functional scope. */
 export function ComingSoonPage({ title, href }: { title: string; href: string }) {
   usePageChrome({ breadcrumbs: [{ text: title, href }], contentType: "default" });
   const onFollow = useFollowHandler();
@@ -20,7 +20,7 @@ export function ComingSoonPage({ title, href }: { title: string; href: string })
       <Container>
         <SpaceBetween size="s">
           <StatusIndicator type="pending">Coming soon</StatusIndicator>
-          <Box variant="p">{title} is outside the functional scope of this Route 53 clone.</Box>
+          <Box variant="p">{title} is outside the functional scope of Fiftythree.</Box>
           <Link href="/hosted-zones" onFollow={onFollow}>
             Go to Hosted zones
           </Link>

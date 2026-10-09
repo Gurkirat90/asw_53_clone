@@ -1,6 +1,6 @@
 # API reference
 
-The Route 53 Clone API is a JSON REST API served by FastAPI. It manages a **simulated** Route 53
+The Fiftythree API is a JSON REST API served by FastAPI. It manages a **simulated** Route 53
 control plane stored in SQLite. It never answers DNS queries, publishes records, or contacts AWS.
 
 Interactive OpenAPI docs: `http://127.0.0.1:8000/docs` (development only; disabled when
@@ -236,7 +236,7 @@ Returns `200` list envelope of DnsRecord.
 |---|---|---|
 | `name` | yes | `@`, a relative name (`www`, `_sip._tcp`), or an FQDN in the zone (`www.example.com` or `www.example.com.`) |
 | `record_type` | yes | one of the nine user types; `SOA` → 422 "SOA records are managed by the system." |
-| `routing_policy` | no | `SIMPLE` (default); anything else → 422 "Only Simple routing is supported in this clone." |
+| `routing_policy` | no | `SIMPLE` (default); anything else → 422 "Only Simple routing is supported in Fiftythree." |
 | `ttl_seconds` | no | JSON integer 0–2147483647, default 300 |
 | `values` | yes | 1–100 value objects of the record type's shape; CNAME exactly 1 |
 | `comment` | no | ≤ 1000 characters, trimmed; empty → `null` |

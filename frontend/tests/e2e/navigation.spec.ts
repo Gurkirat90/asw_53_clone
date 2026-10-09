@@ -23,7 +23,7 @@ test("each side navigation item routes, highlights, and sets breadcrumbs", async
     await expect(sideNav.getByRole("link", { name: item.link, exact: true })).toHaveAttribute("aria-current", "page");
     if (item.comingSoon) {
       await expect(page.getByText("Coming soon")).toBeVisible();
-      await expect(page.getByText(`${item.heading} is outside the functional scope of this Route 53 clone.`)).toBeVisible();
+      await expect(page.getByText(`${item.heading} is outside the functional scope of Fiftythree.`)).toBeVisible();
     }
   }
 });
@@ -33,7 +33,7 @@ test("the Coming soon link and the identity link lead to Hosted zones", async ({
   await page.getByRole("link", { name: "Go to Hosted zones" }).click();
   await expect(page).toHaveURL("/hosted-zones");
   await page.goto("/profiles");
-  await page.getByRole("link", { name: "Route 53 Clone" }).click();
+  await page.getByRole("link", { name: "Fiftythree" }).click();
   await expect(page).toHaveURL("/hosted-zones");
 });
 

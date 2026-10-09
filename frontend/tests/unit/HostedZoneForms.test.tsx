@@ -91,7 +91,7 @@ describe("CreateHostedZoneForm", () => {
     renderConsolePage(<CreateHostedZoneForm />);
     expect(screen.queryByText(/VPC association is simulated/)).not.toBeInTheDocument();
     createWrapper(document.body).findTiles()!.findInputByValue("PRIVATE")!.click();
-    expect(await screen.findByText("VPC association is simulated in this clone. No VPC is created or associated.")).toBeInTheDocument();
+    expect(await screen.findByText("VPC association is simulated in Fiftythree. No VPC is created or associated.")).toBeInTheDocument();
   });
 
   it("asks before discarding a dirty form", async () => {

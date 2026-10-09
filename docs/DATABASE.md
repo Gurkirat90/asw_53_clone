@@ -1,6 +1,6 @@
 # Database schema
 
-The backend stores everything in one SQLite file (default `backend/data/route53_clone.db`, set by
+The backend stores everything in one SQLite file (default `backend/data/fiftythree.db`, set by
 `DATABASE_URL`). The schema is defined by SQLAlchemy models in `backend/app/models/` and created
 **only** by Alembic migrations (`backend/alembic/versions/`). The running app never calls
 `create_all`; at startup it refuses to serve a database that is missing or not at the latest
@@ -178,9 +178,9 @@ cannot be mistaken for real delegation data.
 
 - Apply migrations: `make migrate` (creates `backend/data/` if needed).
 - Create the demo user: `make seed` (requires `DEMO_USER_PASSWORD` in `backend/.env`).
-- Reset local data: stop the backend, delete `backend/data/route53_clone.db` (and its `-wal` /
+- Reset local data: stop the backend, delete `backend/data/fiftythree.db` (and its `-wal` /
   `-shm` files), then run `make migrate` and `make seed`.
-- Back up: stop the backend (or use `sqlite3 backend/data/route53_clone.db ".backup backup.db"`).
+- Back up: stop the backend (or use `sqlite3 backend/data/fiftythree.db ".backup backup.db"`).
 - New schema change: edit the models, then from `backend/` run
   `.venv/bin/alembic revision --autogenerate -m "describe change"`, review the generated file,
   and commit it.

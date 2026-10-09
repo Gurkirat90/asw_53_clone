@@ -179,7 +179,7 @@ export function CreateHostedZoneForm() {
             </FormField>
             {zoneType === "PRIVATE" ? (
               <Alert type="info" statusIconAriaLabel="Info">
-                VPC association is simulated in this clone. No VPC is created or associated.
+                VPC association is simulated in Fiftythree. No VPC is created or associated.
               </Alert>
             ) : null}
           </SpaceBetween>

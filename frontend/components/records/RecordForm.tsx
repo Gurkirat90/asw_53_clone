@@ -338,7 +338,7 @@ export function RecordForm({ zoneId, zoneName, initial, record }: RecordFormProp
               </div>
             </FormField>
 
-            <FormField label="Alias" description="Alias records are not supported in this clone.">
+            <FormField label="Alias" description="Alias records are not supported in Fiftythree.">
               <Toggle checked={false} disabled onChange={() => undefined} ariaLabel="Alias">
                 Alias
               </Toggle>
@@ -389,7 +389,7 @@ export function RecordForm({ zoneId, zoneName, initial, record }: RecordFormProp
               />
             </FormField>
 
-            <FormField label="Routing policy" description="Other routing policies are not available in this clone.">
+            <FormField label="Routing policy" description="Other routing policies are not available in Fiftythree.">
               <Select
                 selectedOption={{ value: "SIMPLE", label: "Simple routing" }}
                 options={[{ value: "SIMPLE", label: "Simple routing" }]}

@@ -13,7 +13,7 @@ import tempfile
 from collections.abc import Iterator
 from pathlib import Path
 
-_TEST_DIR = Path(tempfile.mkdtemp(prefix="route53-clone-tests-"))
+_TEST_DIR = Path(tempfile.mkdtemp(prefix="fiftythree-tests-"))
 for _name in (
     "DATABASE_URL",
     "DEMO_USER_EMAIL",
@@ -46,12 +46,14 @@ from app.main import create_app  # noqa: E402
 from app.models import User  # noqa: E402
 from app.tests.helpers import DEFAULT_PASSWORD, UserFactory, login_client  # noqa: E402
 
-DEVELOPER_DB = (BACKEND_DIR / "data" / "route53_clone.db").resolve()
+DEVELOPER_DATA_DIR = (BACKEND_DIR / "data").resolve()
+DEVELOPER_DB = DEVELOPER_DATA_DIR / "fiftythree.db"
 
 
 def assert_not_developer_db(database_url: str) -> None:
+    """Refuse any database in backend/data/ (the default fiftythree.db or a renamed local copy)."""
     path = sqlite_file_path(database_url)
-    if path is None or path.resolve() == DEVELOPER_DB:
+    if path is None or path.resolve().is_relative_to(DEVELOPER_DATA_DIR):
         pytest.exit(
             f"Refusing to run tests against {database_url}: tests must use a temporary database.",
             returncode=2,

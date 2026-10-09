@@ -419,7 +419,7 @@ def validate_record(
         rtype = str(record_type)
 
     if routing_policy not in ROUTING_POLICIES:
-        issues.add("routing_policy", "Only Simple routing is supported in this clone.")
+        issues.add("routing_policy", "Only Simple routing is supported in Fiftythree.")
 
     ttl: int | None = None
     try:

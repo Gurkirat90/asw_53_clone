@@ -1,4 +1,4 @@
-Alembic migrations for the Route 53 Clone backend.
+Alembic migrations for the Fiftythree backend.
 
 Run from backend/:
     .venv/bin/alembic upgrade head

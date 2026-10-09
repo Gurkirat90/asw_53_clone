@@ -55,7 +55,7 @@ describe("ComingSoonPage", () => {
     );
     expect(screen.getByRole("heading", { level: 1, name: "Health checks" })).toBeInTheDocument();
     expect(screen.getByText("Coming soon")).toBeInTheDocument();
-    expect(screen.getByText("Health checks is outside the functional scope of this Route 53 clone.")).toBeInTheDocument();
+    expect(screen.getByText("Health checks is outside the functional scope of Fiftythree.")).toBeInTheDocument();
     expect(screen.getByTestId("crumbs")).toHaveTextContent("Route 53 > Health checks");
     expect(screen.queryAllByRole("button")).toHaveLength(0);
 

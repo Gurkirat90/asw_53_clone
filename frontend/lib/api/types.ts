@@ -1,4 +1,4 @@
-// Types for the whole Route 53 Clone API contract (see docs/API.md).
+// Types for the whole Fiftythree API contract (see docs/API.md).
 
 export interface UserSummary {
   id: string;

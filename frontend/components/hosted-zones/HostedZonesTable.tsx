@@ -210,7 +210,7 @@ export function HostedZonesTable() {
           <Header
             variant="awsui-h1-sticky"
             counter={data ? `(${data.total_items})` : undefined}
-            description="A hosted zone is a container for records, which include information about how you want to route traffic for a domain and its subdomains. In this clone, records are stored locally."
+            description="A hosted zone is a container for records, which include information about how you want to route traffic for a domain and its subdomains. In Fiftythree, records are stored locally."
             actions={
               <SpaceBetween direction="horizontal" size="xs">
                 <Button

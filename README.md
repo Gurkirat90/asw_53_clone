@@ -1,4 +1,4 @@
-# Route 53 Clone
+# Fiftythree
 
 ## Overview
 
@@ -85,7 +85,7 @@ make migrate
 make seed
 ```
 
-`make migrate` runs `alembic upgrade head` and creates `backend/data/route53_clone.db`. The backend
+`make migrate` runs `alembic upgrade head` and creates `backend/data/fiftythree.db`. The backend
 refuses to start against a missing or unmigrated database. `make seed` is idempotent: it creates
 the demo user if missing and never changes an existing password unless you run
 `make seed SEED_ARGS=--reset-password`.
@@ -152,7 +152,7 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
 - Backend: `make backend-test` runs pytest (`backend/app/tests/`). The suite sets `APP_ENV=test`
   and points `DATABASE_URL` at a temporary SQLite file before the app is imported, migrates it
   once with Alembic, and empties every table around each test. In test mode `backend/.env` is
-  ignored, and a guard aborts the run if the database resolves to `backend/data/route53_clone.db`.
+  ignored, and a guard aborts the run if the database resolves to `backend/data/fiftythree.db`.
   Coverage: migrations (upgrade/downgrade/upgrade, constraints, indexes), foreign keys and
   cascades, UTC timestamps, login/logout/me (cookie attributes, hashed tokens, expired, revoked,
   garbage and inactive-user sessions), the error envelope and request IDs, the Origin check,

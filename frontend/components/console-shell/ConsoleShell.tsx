@@ -63,7 +63,7 @@ function TopBar() {
 
   return (
     <TopNavigation
-      identity={{ title: "Route 53 Clone", href: "/hosted-zones", onFollow: () => router.push("/hosted-zones") }}
+      identity={{ title: "Fiftythree", href: "/hosted-zones", onFollow: () => router.push("/hosted-zones") }}
       search={wide ? <GlobalRegionIndicator /> : undefined}
       utilities={[
         {

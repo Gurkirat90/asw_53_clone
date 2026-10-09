@@ -8,7 +8,7 @@ import "@cloudscape-design/global-styles/index.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME ?? "Route 53 Clone",
+  title: process.env.NEXT_PUBLIC_APP_NAME ?? "Fiftythree",
   description: "A functional simulation of the AWS Route 53 console. It does not serve DNS.",
 };
 

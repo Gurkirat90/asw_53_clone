@@ -253,7 +253,7 @@ def test_patch_can_rename_and_change_type(auth_client: TestClient, zone: dict) -
                 "routing_policy": "WEIGHTED",
                 "values": [{"value": "192.0.2.1"}],
             },
-            {"routing_policy": "Only Simple routing is supported in this clone."},
+            {"routing_policy": "Only Simple routing is supported in Fiftythree."},
         ),
         (
             {"name": "www.other.com.", "record_type": "A", "values": [{"value": "192.0.2.1"}]},

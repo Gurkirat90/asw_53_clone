@@ -100,7 +100,7 @@ export function LoginForm() {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <SpaceBetween size="l">
           <Box textAlign="center" variant="h1" fontSize="heading-xl">
-            Route 53 Clone
+            Fiftythree
           </Box>
           <Container header={<Header variant="h2">Sign in</Header>}>
             <form onSubmit={onSubmit} noValidate>

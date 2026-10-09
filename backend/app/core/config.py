@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     )
 
     APP_ENV: Literal["development", "test", "production"] = "development"
-    DATABASE_URL: str = "sqlite:///./data/route53_clone.db"
+    DATABASE_URL: str = "sqlite:///./data/fiftythree.db"
 
     SESSION_COOKIE_NAME: str = "route53_session"
     SESSION_TTL_SECONDS: int = Field(default=43200, gt=0)
