@@ -4,9 +4,8 @@ Evaluated on 2026-10-09 at commit "Phase 07: Verification, docs, and deployment 
 Statuses: **PASS** (verified, evidence given), **FAIL**, **NOT VERIFIED** (could not be checked
 here), **PENDING** (blocked on something outside this repository).
 
-**Summary: 36 PASS · 0 FAIL · 1 NOT VERIFIED (M36) · 1 PENDING (M37).** The project is not yet
-"complete" by the gate's definition: the hosted link (M37) is pending and the Docker image build
-(M36) has not been run.
+**Summary: 37 PASS · 0 FAIL · 0 NOT VERIFIED · 1 PENDING (M37).** The project is not yet
+"complete" by the gate's definition only because the hosted link (M37) is pending.
 
 ## Verification runs (final)
 
@@ -19,7 +18,7 @@ here), **PENDING** (blocked on something outside this repository).
 | Production-mode run (entrypoint with `APP_ENV=production`, `next build`/`next start` → backend) | entrypoint migrated, seeded, started; cookie `HttpOnly; SameSite=lax; Secure`; trusted Origin 201, foreign Origin 403; `/docs` 404; browser sign-in via "Use demo credentials" works |
 | Clean clone (local `git clone` → README steps → `make check`) | every step succeeded; servers ran (on 8010/3010 because the developer's servers held 8000/3000); sign-in through the proxy OK; `make check` exit 0 |
 | CI | previous run (commit 069c1f8) green; the new e2e job runs on the next push |
-| Docker build / volume restart | NOT RUN: Docker is installed but its daemon was not running |
+| Docker build / volume restart | PASS (Docker 29.6.2): image built; runs as non-root `app` (uid 10001); entrypoint migrated + seeded; Secure cookie; zone + record created, `docker restart` → session, zone, and record intact; demo seed skipped on 2nd start; a new container on the same volume sees the data; missing volume dir fails fast with a clear message |
 
 ## Mandatory items
 
@@ -56,11 +55,11 @@ here), **PENDING** (blocked on something outside this repository).
 | M29 | Backend ruff clean; pytest passes (all areas) | PASS | `make check`: ruff clean, 317 passed |
 | M30 | ESLint, tsc, Vitest, next build | PASS | `make check` |
 | M31 | Playwright: 10 journeys + 9 types + a11y against isolated DB | PASS | `make e2e`: 34 passed (journeys 1–10 named in specs) |
-| M32 | Restart persistence (local; Docker volume if available) | PASS | `make verify-persistence` PASS. The Docker volume restart was not run (daemon not running); see M36 |
+| M32 | Restart persistence (local; Docker volume if available) | PASS | `make verify-persistence` PASS; Docker volume restart and container re-creation PASS |
 | M33 | `frontend/` and `backend/` at root; no secrets/.env/.db tracked; examples complete | PASS | `git ls-files` shows only the two `.env.example` files; `backend/.env.example` covers every setting; frontend example covers all app env vars |
 | M34 | README complete and verified by a clean clone | PASS | clean-clone run above |
 | M35 | API/DATABASE/ARCHITECTURE/DECISIONS match the code | PASS | API.md vs OpenAPI: all 14 routes documented, none extra; DATABASE.md vs migration: tables/columns/indexes match; ARCHITECTURE.md written this phase |
-| M36 | Deployment artifacts ready (Dockerfile + migrations at start, volume, Vercel docs, Secure cookie, /healthz) | NOT VERIFIED | `backend/Dockerfile`, `docker-entrypoint.sh` (run and verified in production mode outside Docker), `render.yaml`, `backend/railway.json`, README Deployment, Vercel build guard verified. **The image has not been built or run** because the Docker daemon was not running |
+| M36 | Deployment artifacts ready (Dockerfile + migrations at start, volume, Vercel docs, Secure cookie, /healthz) | PASS | `backend/Dockerfile` built and run with a named volume (see Docker row above); `render.yaml`, `backend/railway.json`, README Deployment, Vercel build guard verified |
 | M37 | Hosted link live and smoke-tested | PENDING | No Vercel/Render/Railway CLI or account is connected on this machine. Steps: README → Deployment |
 | M38 | Report discloses every non-PASS item | PASS | this document |
 
