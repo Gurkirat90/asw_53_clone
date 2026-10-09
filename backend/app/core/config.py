@@ -1,12 +1,17 @@
-"""Application settings loaded from environment variables and backend/.env."""
+"""Application settings loaded from environment variables and backend/.env.
+
+When APP_ENV=test is set in the process environment, backend/.env is ignored so a developer's
+local settings (database path, demo password) never leak into the test suite.
+"""
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -31,7 +36,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./data/route53_clone.db"
 
     SESSION_COOKIE_NAME: str = "route53_session"
-    SESSION_TTL_SECONDS: int = 43200
+    SESSION_TTL_SECONDS: int = Field(default=43200, gt=0)
     SESSION_COOKIE_SECURE: bool = False
 
     DEMO_USER_EMAIL: str = "demo@example.test"
@@ -53,6 +58,13 @@ class Settings(BaseSettings):
     @classmethod
     def _parse_origin_list(cls, value: object) -> object:
         return _split_csv(value)
+
+    @field_validator("CORS_ALLOWED_ORIGINS")
+    @classmethod
+    def _reject_wildcard_cors(cls, value: list[str]) -> list[str]:
+        if "*" in value:
+            raise ValueError("Wildcard CORS origins are not allowed with credentialed cookies.")
+        return value
 
     @field_validator("LOG_LEVEL")
     @classmethod
@@ -87,4 +99,6 @@ def resolve_sqlite_url(url: str) -> str:
 @lru_cache
 def get_settings() -> Settings:
     """Cached settings accessor. Tests call get_settings.cache_clear() or pass Settings."""
+    if os.environ.get("APP_ENV") == "test":
+        return Settings(_env_file=None)
     return Settings()

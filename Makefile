@@ -31,8 +31,8 @@ migrate: ## Apply Alembic migrations to DATABASE_URL
 	mkdir -p "$(BACKEND_DIR)/data"
 	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m alembic upgrade head
 
-seed: ## Create/update the demo user (PROMPT 02)
-	@echo "make seed: not implemented until PROMPT 02" >&2; exit 1
+seed: ## Create the demo user if missing (SEED_ARGS=--reset-password to reset its password)
+	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m app.cli seed-demo-user $(SEED_ARGS)
 
 seed-demo-data: ## Load demo hosted zones and records (PROMPT 03)
 	@echo "make seed-demo-data: not implemented until PROMPT 03" >&2; exit 1

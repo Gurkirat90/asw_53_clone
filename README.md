@@ -11,9 +11,10 @@ data persisted in SQLite through a FastAPI API.
 > propagates records, contacts AWS, provisions resources, or implements real IAM, Organizations, or
 > billing. Login is a local mock.
 
-**Current status (Phase 01, repository foundation):** the monorepo skeleton, tooling, CI, a
-`GET /healthz` endpoint, and a temporary Cloudscape smoke page. Product features arrive in later
-phases. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+**Current status (Phase 02, persistence and mock authentication):** SQLite schema and Alembic
+migrations for all five tables, a standardized error/request-ID framework, and the session-based
+mock login API (`/api/v1/auth/login`, `/logout`, `/me`). The frontend is still the Phase 01 smoke
+page; hosted zones, records, and the console UI arrive in later phases. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Tech stack
 
@@ -63,6 +64,24 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 ```
 
+Edit `backend/.env` and set `DEMO_USER_PASSWORD` to a local password of your choice. It is the
+password for the demo login (`DEMO_USER_EMAIL`, default `demo@example.test`); `.env` is gitignored.
+
+Create the database schema and the demo user:
+
+```bash
+make migrate
+```
+
+```bash
+make seed
+```
+
+`make migrate` runs `alembic upgrade head` and creates `backend/data/route53_clone.db`. The backend
+refuses to start against a missing or unmigrated database. `make seed` is idempotent: it creates
+the demo user if missing and never changes an existing password unless you run
+`make seed SEED_ARGS=--reset-password`.
+
 `API_INTERNAL_BASE_URL` (frontend) is the server-side target of the `/api/*` rewrite. Next.js
 resolves rewrites at **build time**, so set it before `npm run build` when the API is not at
 `http://127.0.0.1:8000`.
@@ -85,8 +104,8 @@ development), and `http://localhost:3000/api/v1/...` is proxied to it.
 | Command | Purpose | Status |
 |---|---|---|
 | `make setup` | Create venv, install backend and frontend dependencies | Working |
-| `make migrate` | `alembic upgrade head` against `DATABASE_URL` (creates `backend/data/`) | Working (no migrations yet) |
-| `make seed` | Create/update the demo user | Not implemented until PROMPT 02 (exits 1) |
+| `make migrate` | `alembic upgrade head` against `DATABASE_URL` (creates `backend/data/`) | Working |
+| `make seed` | Create the demo user if missing (`SEED_ARGS=--reset-password` resets its password) | Working |
 | `make seed-demo-data` | Load demo zones and records | Not implemented until PROMPT 03 (exits 1) |
 | `make backend-run` | Uvicorn on 127.0.0.1:8000, single worker, auto-reload | Working |
 | `make frontend-run` | Next.js dev server on port 3000 | Working |
@@ -104,8 +123,14 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
 
 ## Testing
 
-- Backend: `make backend-test` runs pytest (`backend/app/tests/`). Tests use isolated temporary
-  SQLite files and never touch `backend/data/route53_clone.db`.
+- Backend: `make backend-test` runs pytest (`backend/app/tests/`). The suite sets `APP_ENV=test`
+  and points `DATABASE_URL` at a temporary SQLite file before the app is imported, migrates it
+  once with Alembic, and empties every table around each test. In test mode `backend/.env` is
+  ignored, and a guard aborts the run if the database resolves to `backend/data/route53_clone.db`.
+  Coverage: migrations (upgrade/downgrade/upgrade, constraints, indexes), foreign keys and
+  cascades, UTC timestamps, login/logout/me (cookie attributes, hashed tokens, expired, revoked,
+  garbage and inactive-user sessions), the error envelope and request IDs, the Origin check,
+  startup refusal on an unmigrated database, `/healthz`, and the seed command.
 - Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/`).
 - CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
   push to `main` and on pull requests.
@@ -117,12 +142,23 @@ Browser → Next.js (same-origin `/api/*` rewrite) → FastAPI → SQLite. Detai
 
 ## Database schema
 
-Managed exclusively by Alembic migrations (from PROMPT 02). Details: `docs/DATABASE.md` (to be
-written).
+Five tables (`users`, `sessions`, `hosted_zones`, `dns_records`, `record_values`), managed
+exclusively by Alembic migrations. Details: [docs/DATABASE.md](docs/DATABASE.md).
 
 ## API overview
 
-Base path `/api/v1`; health check `GET /healthz`. Details: `docs/API.md` (to be written).
+Base path `/api/v1`; health check `GET /healthz` (`{"status":"ok","database":"ok"}`, or `503`).
+Implemented so far:
+
+| Method + path | Result |
+|---|---|
+| `POST /api/v1/auth/login` | `200` user summary + HttpOnly `route53_session` cookie; `401 AUTHENTICATION_FAILED`; `422 VALIDATION_ERROR` |
+| `POST /api/v1/auth/logout` | `204`; revokes the session and clears the cookie |
+| `GET /api/v1/auth/me` | `200` user summary; `401 UNAUTHENTICATED` |
+
+Every error uses `{"error": {"code", "message", "details": [{"field", "message"}], "request_id"}}`
+and every response carries `X-Request-ID`. Unsafe requests (POST/PUT/PATCH/DELETE) whose `Origin`
+header is not in `TRUSTED_ORIGINS` get `403 FORBIDDEN`. Full reference: `docs/API.md` (PROMPT 03).
 
 ## Deployment
 
