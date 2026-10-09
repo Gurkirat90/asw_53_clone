@@ -17,7 +17,8 @@ import { useState } from "react";
 
 import { usePageChrome } from "@/components/console-shell/PageChrome";
 import { ErrorState, NotFoundState } from "@/components/feedback/states";
-import { RecordsTable, useRecordListState } from "@/components/records/RecordsTable";
+import { useRecordListState } from "@/components/records/RecordsTable";
+import { ZoneRecords } from "@/components/records/ZoneRecords";
 import { ApiError } from "@/lib/api/client";
 import { userMessage } from "@/lib/api/errors";
 import type { HostedZoneDetail as Zone } from "@/lib/api/types";
@@ -130,7 +131,7 @@ function HostedZoneDetailContent({ zone }: { zone: Zone }) {
             {
               id: "records",
               label: `Records (${zone.record_count})`,
-              content: <RecordsTable zoneId={zone.zone_id} listState={records} />,
+              content: <ZoneRecords zoneId={zone.zone_id} listState={records} />,
             },
             { id: "dnssec", label: "DNSSEC signing", content: <ComingSoonTab feature="DNSSEC signing" /> },
             { id: "tags", label: "Hosted zone tags", content: <ComingSoonTab feature="Hosted zone tag management" /> },

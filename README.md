@@ -19,7 +19,10 @@ console shell (top bar, side navigation, breadcrumbs, notifications), mock sign-
 route protection, Coming soon pages, and the typed API client. Phase 05 adds the hosted zone
 workflows: the zones list (search, Type filter, sorting, pagination, page size, all in the URL),
 create, edit description, delete with typed confirmation, and the zone detail page with a
-read-only records table. Record create/edit/delete arrives in PROMPT 06. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+read-only records table. Phase 06 completes DNS record management for all nine types (A, AAAA,
+CNAME, TXT, MX, NS, PTR, SRV, CAA): search, Type and Routing policy filters, sorting, pagination,
+a record details panel, type-specific create/edit forms with field-level validation that matches
+the server, deletion with confirmation, and view-only system NS/SOA records. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Tech stack
 
@@ -163,7 +166,9 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
   mapping, URL list state, debounce, the confirmation modal (typed confirmation, focus), the login
   form (validation, generic 401, safe `next`), navigation highlighting, notifications, states, the
   hosted zones list/create/edit/delete components, and the zone-name conformance test that runs
-  `shared/dns-validation-cases.json` against `frontend/lib/validation/dns.ts`.
+  `shared/dns-validation-cases.json` against `frontend/lib/validation/dns.ts` (every case of every
+  kind), plus the record form for all nine types (editors, exact payloads, per-row errors, server
+  422/409 mapping, double-submit, edit prefill), the records tab, and the record delete dialog.
 - End-to-end: `make e2e` runs Playwright (`frontend/tests/e2e/`). It needs Chromium once:
   `cd frontend && npx playwright install chromium`. Playwright starts its own stack and never
   reuses dev servers or the developer DB:
@@ -177,8 +182,10 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
     "Failed to load resource ... 401" lines for expected API 401s (session probe, wrong password)
     and API errors a test declares on purpose with `allowApiError(...)` (e.g. a 404 after deleting
     a zone).
-  - Journeys: sign-in/out, navigation, and hosted zones (create, search/filter, edit, delete,
-    invalid input, URL state, not found).
+  - Journeys: sign-in/out, navigation, hosted zones (create, search/filter, edit, delete, invalid
+    input, URL state, not found), and records (one of each type through the UI, search/filter/
+    pagination in the URL, in-place edit, delete, system-record protection, server conflicts,
+    and records gone after the zone is deleted).
 - CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
   push to `main` and on pull requests.
 

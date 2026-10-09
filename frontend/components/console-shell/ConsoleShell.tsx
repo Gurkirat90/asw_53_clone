@@ -4,6 +4,7 @@ import AppLayout from "@cloudscape-design/components/app-layout";
 import BreadcrumbGroup from "@cloudscape-design/components/breadcrumb-group";
 import Icon from "@cloudscape-design/components/icon";
 import SideNavigation from "@cloudscape-design/components/side-navigation";
+import SplitPanel from "@cloudscape-design/components/split-panel";
 import TopNavigation from "@cloudscape-design/components/top-navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
 
 import { activeNavHref, NAV_HEADER, NAV_ITEMS } from "./navigation";
 import { useShellChrome } from "./PageChrome";
+import { useSplitPanelState } from "./SplitPanelSlot";
 
 const SIGN_OUT_ITEM = "sign-out";
 
@@ -85,6 +87,7 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const onFollow = useFollowHandler();
   const { breadcrumbs, contentType } = useShellChrome();
+  const splitPanel = useSplitPanelState();
 
   return (
     <>
@@ -107,6 +110,24 @@ export function ConsoleShell({ children }: { children: ReactNode }) {
           <BreadcrumbGroup items={breadcrumbs} onFollow={onFollow} ariaLabel="Breadcrumbs" />
         }
         notifications={<NotificationsFlashbar />}
+        splitPanel={
+          splitPanel ? (
+            <SplitPanel
+              header={splitPanel.header}
+              hidePreferencesButton
+              closeBehavior="hide"
+              i18nStrings={{
+                closeButtonAriaLabel: "Close details panel",
+                openButtonAriaLabel: "Open details panel",
+                resizeHandleAriaLabel: "Resize details panel",
+              }}
+            >
+              {splitPanel.content}
+            </SplitPanel>
+          ) : undefined
+        }
+        splitPanelOpen={splitPanel?.open ?? false}
+        onSplitPanelToggle={({ detail }) => splitPanel?.onToggle(detail.open)}
         ariaLabels={{
           navigation: "Route 53 navigation",
           navigationClose: "Close navigation",

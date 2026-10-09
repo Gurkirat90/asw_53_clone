@@ -87,6 +87,8 @@ export interface RecordsTableProps {
   onSelectionChange?: (records: DnsRecord[]) => void;
   /** Enables server-side sorting on name/type/TTL (PROMPT 06). */
   sortingEnabled?: boolean;
+  /** Footer override (default: a note that records are stored locally). */
+  footer?: ReactNode;
 }
 
 /** A zone's records from the real API with server-side pagination (page/page_size in the URL). */
@@ -100,6 +102,7 @@ export function RecordsTable({
   selectedItems,
   onSelectionChange,
   sortingEnabled = false,
+  footer,
 }: RecordsTableProps) {
   const query = useRecordsList(zoneId, recordListParams(listState));
   const data = query.isError ? undefined : query.data;
@@ -181,11 +184,12 @@ export function RecordsTable({
         />
       }
       footer={
-        data && data.total_items > 0 ? (
+        footer ??
+        (data && data.total_items > 0 ? (
           <Box variant="small" color="text-body-secondary">
             Records are stored in this application&apos;s database only; nothing is published to DNS.
           </Box>
-        ) : undefined
+        ) : undefined)
       }
     />
   );
