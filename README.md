@@ -5,8 +5,8 @@
 > - **Email: `demo@example.test`**
 > - **Password: `fiftythree-demo`**
 >
-> The login page also shows these with a **Use demo credentials** button. Hosted demo URL:
-> **PENDING** (see [Deployment](#deployment)).
+> **Live demo: https://fiftythree-pi.vercel.app** (the login page also has a **Use demo
+> credentials** button).
 
 A functional simulation of the AWS Route 53 web console, built for the Scaler SDE Fullstack
 assignment ([PDF](docs/assignment/Scaler_SDE_Fullstack_Assignment_-_AWS_Route53_Clone.pdf)). It
@@ -22,8 +22,9 @@ Completion report: [docs/COMPLETION_REPORT.md](docs/COMPLETION_REPORT.md)
 
 ## Hosted demo
 
-**URL: PENDING** (see [Deployment](#deployment); the app is ready to deploy, but no hosting
-account is connected yet).
+**Live: https://fiftythree-pi.vercel.app** (frontend on Vercel) with the API on Railway
+(`https://fiftythree-api-production.up.railway.app`, health check `/healthz`) and SQLite on a
+Railway volume. Data survives backend redeploys (verified).
 
 Sign in with **`demo@example.test` / `fiftythree-demo`**. This is a public demo password: the
 backend reads it from `DEMO_USER_PASSWORD`, and the login page shows it (with a "Use demo
@@ -263,8 +264,9 @@ every deploy.
 
 **Railway** (alternative): New project → Deploy from GitHub → set the service root directory to
 `backend` (`backend/railway.json` selects the Dockerfile and the `/healthz` check) → add a volume
-mounted at `/data` → set the variables above → generate a public domain. If the volume is not
-writable by the image's non-root user, set `RAILWAY_RUN_UID=0`.
+mounted at `/data` → set the variables above plus `RAILWAY_RUN_UID=0` (Railway volumes are owned
+by root, and the image runs as a non-root user) → generate a public domain. This is how the live
+demo is deployed.
 
 Any other Docker host works the same way: build `backend/`, mount a volume at `/data`, set the
 variables, and expose the port.

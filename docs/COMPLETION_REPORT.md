@@ -4,8 +4,8 @@ Evaluated on 2026-10-09 at commit "Phase 07: Verification, docs, and deployment 
 Statuses: **PASS** (verified, evidence given), **FAIL**, **NOT VERIFIED** (could not be checked
 here), **PENDING** (blocked on something outside this repository).
 
-**Summary: 37 PASS · 0 FAIL · 0 NOT VERIFIED · 1 PENDING (M37).** The project is not yet
-"complete" by the gate's definition only because the hosted link (M37) is pending.
+**Summary: 38 PASS · 0 FAIL · 0 NOT VERIFIED · 0 PENDING.** All mandatory items pass.
+Live demo: https://fiftythree-pi.vercel.app (API on Railway).
 
 ## Verification runs (final)
 
@@ -60,7 +60,7 @@ here), **PENDING** (blocked on something outside this repository).
 | M34 | README complete and verified by a clean clone | PASS | clean-clone run above |
 | M35 | API/DATABASE/ARCHITECTURE/DECISIONS match the code | PASS | API.md vs OpenAPI: all 14 routes documented, none extra; DATABASE.md vs migration: tables/columns/indexes match; ARCHITECTURE.md written this phase |
 | M36 | Deployment artifacts ready (Dockerfile + migrations at start, volume, Vercel docs, Secure cookie, /healthz) | PASS | `backend/Dockerfile` built and run with a named volume (see Docker row above); `render.yaml`, `backend/railway.json`, README Deployment, Vercel build guard verified |
-| M37 | Hosted link live and smoke-tested | PENDING | No Vercel/Render/Railway CLI or account is connected on this machine. Steps: README → Deployment |
+| M37 | Hosted link live and smoke-tested | PASS | https://fiftythree-pi.vercel.app (Vercel) → https://fiftythree-api-production.up.railway.app (Railway, SQLite on a volume). Smoke test: `/healthz` ok; browser sign-in via "Use demo credentials" and reload; through the proxy: login 200 + Secure cookie, zone + MX record create, read, delete (204/204, zone then 404), foreign Origin 403, logout 204 then 401; a marker zone and the session survived a Railway redeploy |
 | M38 | Report discloses every non-PASS item | PASS | this document |
 
 ## Optional bonus
