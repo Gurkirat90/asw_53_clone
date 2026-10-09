@@ -83,6 +83,36 @@ def test_seeded_demo_user_can_log_in(db: Session, demo_password: str, client) ->
     assert response.json()["email"] == DEMO_EMAIL
 
 
-def test_seed_demo_data_is_not_implemented_yet(capsys: pytest.CaptureFixture[str]) -> None:
+def test_seed_demo_data_requires_demo_user(db: Session, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["seed-demo-data"]) == 1
-    assert "PROMPT 03" in capsys.readouterr().err
+    assert "run `make seed` first" in capsys.readouterr().err
+
+
+def test_seed_demo_data_is_idempotent_and_covers_all_types(
+    db: Session, demo_password: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from app.models import DnsRecord, HostedZone
+
+    assert main(["seed-demo-user"]) == 0
+    assert main(["seed-demo-data"]) == 0
+    assert main(["seed-demo-data"]) == 0
+    output = capsys.readouterr().out
+    assert "created 3 hosted zones and 23 records" in output
+    assert "skipped" in output
+
+    db.expire_all()
+    zones = {zone.name: zone for zone in db.scalars(select(HostedZone)).all()}
+    assert set(zones) == {"example.com", "example.net", "internal.example.com"}
+    assert zones["internal.example.com"].zone_type == "PRIVATE"
+    main_zone = zones["example.com"]
+    types = set(
+        db.scalars(
+            select(DnsRecord.record_type).where(
+                DnsRecord.hosted_zone_id == main_zone.id, DnsRecord.is_system.is_(False)
+            )
+        ).all()
+    )
+    assert types == {"A", "AAAA", "CNAME", "TXT", "MX", "NS", "PTR", "SRV", "CAA"}
+    total = db.scalars(select(DnsRecord).where(DnsRecord.hosted_zone_id == main_zone.id)).all()
+    assert len(total) == 9 + 12 + 2  # nine types, app-01..12, system NS + SOA
+    assert len(db.scalars(select(DnsRecord)).all()) == 23 + 3 * 2

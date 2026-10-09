@@ -34,8 +34,8 @@ migrate: ## Apply Alembic migrations to DATABASE_URL
 seed: ## Create the demo user if missing (SEED_ARGS=--reset-password to reset its password)
 	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m app.cli seed-demo-user $(SEED_ARGS)
 
-seed-demo-data: ## Load demo hosted zones and records (PROMPT 03)
-	@echo "make seed-demo-data: not implemented until PROMPT 03" >&2; exit 1
+seed-demo-data: ## Load demo hosted zones and records for the demo user (skips if it has zones)
+	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m app.cli seed-demo-data
 
 backend-run: ## Run FastAPI on 127.0.0.1:8000 (single worker, auto-reload)
 	cd "$(BACKEND_DIR)" && "$(BACKEND_PY)" -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload

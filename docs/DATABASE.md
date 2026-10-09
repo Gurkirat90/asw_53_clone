@@ -131,11 +131,18 @@ one transaction.
 | PTR | `{"value": "host.example.net"}` | `host.example.net` |
 | SRV | `{"priority": 10, "weight": 5, "port": 443, "target": "service.example.net"}` | `10 5 443 service.example.net` |
 | CAA | `{"flags": 0, "tag": "issue", "value": "letsencrypt.org"}` | `0 issue "letsencrypt.org"` |
-| SOA (system only) | `{"mname": "ns-1.route53-clone.invalid", "rname": "hostmaster.example.invalid", "serial": 1, "refresh": 7200, "retry": 900, "expire": 1209600, "minimum": 86400}` | `ns-1.route53-clone.invalid hostmaster.example.invalid 1 7200 900 1209600 86400` |
+| SOA (system only) | `{"mname": "ns-1234.awsdns-05.invalid", "rname": "awsdns-hostmaster.invalid", "serial": 1, "refresh": 7200, "retry": 900, "expire": 1209600, "minimum": 86400}` | `ns-1234.awsdns-05.invalid awsdns-hostmaster.invalid 1 7200 900 1209600 86400` |
 
-The exact validation and formatting rules are implemented in PROMPT 03 (`dns_validation.py`,
-one backend formatter). Values in this table are documentation examples only; system records use
-`.invalid` hostnames so they can never be mistaken for real delegation data.
+Validation, normalization, and the single `display_value` formatter live in
+`backend/app/services/dns_validation.py` (rules: [API.md](API.md#validation-rules)). TXT and CAA
+values are displayed in double quotes with `\` and `"` backslash-escaped.
+
+**System records.** Creating a zone inserts, in the same transaction, an apex NS record
+(TTL 172800, four distinct `ns-<1..2047>.awsdns-<00..63>.invalid` hosts) and an apex SOA record
+(TTL 900, `mname` = the first name server, `rname` = `awsdns-hostmaster.invalid`, serial 1,
+refresh 7200, retry 900, expire 1209600, minimum 86400). Both have `is_system = 1` and cannot be
+changed or deleted through the API. The `.invalid` TLD guarantees they never resolve, so they
+cannot be mistaken for real delegation data.
 
 ## Invariants (PRD §14.8)
 

@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.logging import get_request_id
+from app.services.dns_validation import DnsFieldErrors
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +201,11 @@ async def _app_error_handler(_request: Request, exc: Exception) -> JSONResponse:
     return error_response(exc.status_code, exc.code, exc.message, exc.details)
 
 
+async def _dns_field_errors_handler(_request: Request, exc: Exception) -> JSONResponse:
+    assert isinstance(exc, DnsFieldErrors)
+    return error_response(422, "VALIDATION_ERROR", VALIDATION_MESSAGE, exc.details)
+
+
 async def _request_validation_handler(_request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, RequestValidationError)
     return error_response(
@@ -227,5 +233,6 @@ async def _http_exception_handler(_request: Request, exc: Exception) -> JSONResp
 def register_exception_handlers(app: FastAPI) -> None:
     """Unhandled exceptions are rendered by RequestIdMiddleware (it wraps the whole stack)."""
     app.add_exception_handler(AppError, _app_error_handler)
+    app.add_exception_handler(DnsFieldErrors, _dns_field_errors_handler)
     app.add_exception_handler(RequestValidationError, _request_validation_handler)
     app.add_exception_handler(StarletteHTTPException, _http_exception_handler)

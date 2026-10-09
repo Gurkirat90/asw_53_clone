@@ -1,0 +1,1032 @@
+{
+  "version": 1,
+  "description": "Cross-stack DNS validation conformance cases. 'expected' is the normalized output for valid cases. Backend: app/services/dns_validation.py. Kinds mx/srv/caa take a value object.",
+  "cases": [
+    {
+      "id": "zone_name.simple",
+      "kind": "zone_name",
+      "input": "example.com",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "zone_name.uppercase",
+      "kind": "zone_name",
+      "input": "Example.COM",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "zone_name.trailing-dot",
+      "kind": "zone_name",
+      "input": "example.com.",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "zone_name.outer-whitespace",
+      "kind": "zone_name",
+      "input": "  example.net  ",
+      "valid": true,
+      "expected": "example.net"
+    },
+    {
+      "id": "zone_name.subdomain",
+      "kind": "zone_name",
+      "input": "sub.example.com",
+      "valid": true,
+      "expected": "sub.example.com"
+    },
+    {
+      "id": "zone_name.hyphen-inside",
+      "kind": "zone_name",
+      "input": "my-site.example.com",
+      "valid": true,
+      "expected": "my-site.example.com"
+    },
+    {
+      "id": "zone_name.digits-first-label",
+      "kind": "zone_name",
+      "input": "123.example.com",
+      "valid": true,
+      "expected": "123.example.com"
+    },
+    {
+      "id": "zone_name.punycode",
+      "kind": "zone_name",
+      "input": "xn--bcher-kva.example",
+      "valid": true,
+      "expected": "xn--bcher-kva.example"
+    },
+    {
+      "id": "zone_name.label-63",
+      "kind": "zone_name",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+      "valid": true,
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com"
+    },
+    {
+      "id": "zone_name.total-253",
+      "kind": "zone_name",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "valid": true,
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "id": "zone_name.single-label",
+      "kind": "zone_name",
+      "input": "example",
+      "valid": false
+    },
+    {
+      "id": "zone_name.empty",
+      "kind": "zone_name",
+      "input": "",
+      "valid": false
+    },
+    {
+      "id": "zone_name.empty-middle-label",
+      "kind": "zone_name",
+      "input": "example..com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.leading-dot",
+      "kind": "zone_name",
+      "input": ".example.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.two-trailing-dots",
+      "kind": "zone_name",
+      "input": "example.com..",
+      "valid": false
+    },
+    {
+      "id": "zone_name.scheme",
+      "kind": "zone_name",
+      "input": "http://example.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.path",
+      "kind": "zone_name",
+      "input": "example.com/path",
+      "valid": false
+    },
+    {
+      "id": "zone_name.inner-space",
+      "kind": "zone_name",
+      "input": "exa mple.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.underscore",
+      "kind": "zone_name",
+      "input": "_dmarc.example.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.wildcard",
+      "kind": "zone_name",
+      "input": "*.example.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.leading-hyphen",
+      "kind": "zone_name",
+      "input": "-example.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.trailing-hyphen",
+      "kind": "zone_name",
+      "input": "example-.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.label-64",
+      "kind": "zone_name",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+      "valid": false
+    },
+    {
+      "id": "zone_name.total-254",
+      "kind": "zone_name",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "valid": false
+    },
+    {
+      "id": "zone_name.numeric-tld",
+      "kind": "zone_name",
+      "input": "example.123",
+      "valid": false
+    },
+    {
+      "id": "zone_name.ipv4-literal",
+      "kind": "zone_name",
+      "input": "192.0.2.1",
+      "valid": false
+    },
+    {
+      "id": "zone_name.non-ascii",
+      "kind": "zone_name",
+      "input": "bücher.example",
+      "valid": false
+    },
+    {
+      "id": "record_name.apex-at",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "@",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "record_name.relative",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www",
+      "valid": true,
+      "expected": "www.example.com"
+    },
+    {
+      "id": "record_name.relative-uppercase",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "WWW",
+      "valid": true,
+      "expected": "www.example.com"
+    },
+    {
+      "id": "record_name.relative-whitespace",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "  Mail  ",
+      "valid": true,
+      "expected": "mail.example.com"
+    },
+    {
+      "id": "record_name.relative-multi-label",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "a.b",
+      "valid": true,
+      "expected": "a.b.example.com"
+    },
+    {
+      "id": "record_name.fqdn-in-zone",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www.example.com",
+      "valid": true,
+      "expected": "www.example.com"
+    },
+    {
+      "id": "record_name.fqdn-in-zone-absolute",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www.example.com.",
+      "valid": true,
+      "expected": "www.example.com"
+    },
+    {
+      "id": "record_name.apex-fqdn",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "example.com",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "record_name.apex-fqdn-absolute",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "example.com.",
+      "valid": true,
+      "expected": "example.com"
+    },
+    {
+      "id": "record_name.relative-looks-external",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www.other.com",
+      "valid": true,
+      "expected": "www.other.com.example.com"
+    },
+    {
+      "id": "record_name.relative-suffix-not-label-boundary",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "notexample.com",
+      "valid": true,
+      "expected": "notexample.com.example.com"
+    },
+    {
+      "id": "record_name.wildcard-only",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "*",
+      "valid": true,
+      "expected": "*.example.com"
+    },
+    {
+      "id": "record_name.wildcard-leftmost",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "*.dev",
+      "valid": true,
+      "expected": "*.dev.example.com"
+    },
+    {
+      "id": "record_name.underscores",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "_sip._tcp",
+      "valid": true,
+      "expected": "_sip._tcp.example.com"
+    },
+    {
+      "id": "record_name.label-63",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "valid": true,
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com"
+    },
+    {
+      "id": "record_name.total-253",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "valid": true,
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.ddddddddddddddddddddddddddddddddddddddddddddddddd.example.com"
+    },
+    {
+      "id": "record_name.nested-zone-fqdn",
+      "kind": "record_name",
+      "zone": "sub.example.com",
+      "input": "www.sub.example.com",
+      "valid": true,
+      "expected": "www.sub.example.com"
+    },
+    {
+      "id": "record_name.absolute-out-of-zone",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www.other.com.",
+      "valid": false
+    },
+    {
+      "id": "record_name.absolute-at",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "@.",
+      "valid": false
+    },
+    {
+      "id": "record_name.empty",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "",
+      "valid": false
+    },
+    {
+      "id": "record_name.whitespace-only",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "   ",
+      "valid": false
+    },
+    {
+      "id": "record_name.wildcard-not-leftmost",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "dev.*",
+      "valid": false
+    },
+    {
+      "id": "record_name.wildcard-partial-label",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "a*b",
+      "valid": false
+    },
+    {
+      "id": "record_name.empty-middle-label",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "a..b",
+      "valid": false
+    },
+    {
+      "id": "record_name.leading-hyphen",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "-www",
+      "valid": false
+    },
+    {
+      "id": "record_name.trailing-hyphen",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www-",
+      "valid": false
+    },
+    {
+      "id": "record_name.scheme",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "http://www",
+      "valid": false
+    },
+    {
+      "id": "record_name.path",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "www/path",
+      "valid": false
+    },
+    {
+      "id": "record_name.inner-space",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "my host",
+      "valid": false
+    },
+    {
+      "id": "record_name.label-64",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "valid": false
+    },
+    {
+      "id": "record_name.total-254",
+      "kind": "record_name",
+      "zone": "example.com",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.dddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "valid": false
+    },
+    {
+      "id": "hostname.simple",
+      "kind": "hostname",
+      "input": "host.example.net",
+      "valid": true,
+      "expected": "host.example.net"
+    },
+    {
+      "id": "hostname.uppercase-trailing-dot",
+      "kind": "hostname",
+      "input": "Mail.Example.NET.",
+      "valid": true,
+      "expected": "mail.example.net"
+    },
+    {
+      "id": "hostname.underscore",
+      "kind": "hostname",
+      "input": "_service.example.net",
+      "valid": true,
+      "expected": "_service.example.net"
+    },
+    {
+      "id": "hostname.single-label",
+      "kind": "hostname",
+      "input": "localhost",
+      "valid": false
+    },
+    {
+      "id": "hostname.wildcard",
+      "kind": "hostname",
+      "input": "*.example.net",
+      "valid": false
+    },
+    {
+      "id": "hostname.root-dot",
+      "kind": "hostname",
+      "input": ".",
+      "valid": false
+    },
+    {
+      "id": "hostname.scheme",
+      "kind": "hostname",
+      "input": "http://example.net",
+      "valid": false
+    },
+    {
+      "id": "hostname.empty",
+      "kind": "hostname",
+      "input": "",
+      "valid": false
+    },
+    {
+      "id": "hostname.empty-middle-label",
+      "kind": "hostname",
+      "input": "a..example.net",
+      "valid": false
+    },
+    {
+      "id": "ipv4.simple",
+      "kind": "ipv4",
+      "input": "192.0.2.10",
+      "valid": true,
+      "expected": "192.0.2.10"
+    },
+    {
+      "id": "ipv4.outer-whitespace",
+      "kind": "ipv4",
+      "input": " 198.51.100.7 ",
+      "valid": true,
+      "expected": "198.51.100.7"
+    },
+    {
+      "id": "ipv4.leading-zero",
+      "kind": "ipv4",
+      "input": "192.0.2.010",
+      "valid": false
+    },
+    {
+      "id": "ipv4.octet-256",
+      "kind": "ipv4",
+      "input": "256.0.2.1",
+      "valid": false
+    },
+    {
+      "id": "ipv4.three-octets",
+      "kind": "ipv4",
+      "input": "192.0.2",
+      "valid": false
+    },
+    {
+      "id": "ipv4.ipv6",
+      "kind": "ipv4",
+      "input": "2001:db8::1",
+      "valid": false
+    },
+    {
+      "id": "ipv4.prefix",
+      "kind": "ipv4",
+      "input": "192.0.2.1/24",
+      "valid": false
+    },
+    {
+      "id": "ipv4.port",
+      "kind": "ipv4",
+      "input": "192.0.2.1:80",
+      "valid": false
+    },
+    {
+      "id": "ipv4.empty",
+      "kind": "ipv4",
+      "input": "",
+      "valid": false
+    },
+    {
+      "id": "ipv4.number",
+      "kind": "ipv4",
+      "input": 10,
+      "valid": false
+    },
+    {
+      "id": "ipv6.compressed",
+      "kind": "ipv6",
+      "input": "2001:db8::10",
+      "valid": true,
+      "expected": "2001:db8::10"
+    },
+    {
+      "id": "ipv6.uppercase-expanded",
+      "kind": "ipv6",
+      "input": "2001:DB8:0:0:0:0:0:10",
+      "valid": true,
+      "expected": "2001:db8::10"
+    },
+    {
+      "id": "ipv6.leading-zeros",
+      "kind": "ipv6",
+      "input": "2001:0db8:0000:0000:0000:ff00:0042:8329",
+      "valid": true,
+      "expected": "2001:db8::ff00:42:8329"
+    },
+    {
+      "id": "ipv6.first-longest-run",
+      "kind": "ipv6",
+      "input": "2001:db8:0:0:1:0:0:1",
+      "valid": true,
+      "expected": "2001:db8::1:0:0:1"
+    },
+    {
+      "id": "ipv6.single-zero-not-compressed",
+      "kind": "ipv6",
+      "input": "2001:db8:0:1:1:1:1:1",
+      "valid": true,
+      "expected": "2001:db8:0:1:1:1:1:1"
+    },
+    {
+      "id": "ipv6.ipv4-in-aaaa",
+      "kind": "ipv6",
+      "input": "192.0.2.1",
+      "valid": false
+    },
+    {
+      "id": "ipv6.ipv4-mapped-dotted",
+      "kind": "ipv6",
+      "input": "::ffff:192.0.2.1",
+      "valid": false
+    },
+    {
+      "id": "ipv6.zone-id",
+      "kind": "ipv6",
+      "input": "fe80::1%eth0",
+      "valid": false
+    },
+    {
+      "id": "ipv6.bad-hex",
+      "kind": "ipv6",
+      "input": "2001:db8::g",
+      "valid": false
+    },
+    {
+      "id": "ipv6.triple-colon",
+      "kind": "ipv6",
+      "input": "2001:db8:::1",
+      "valid": false
+    },
+    {
+      "id": "ttl.zero",
+      "kind": "ttl",
+      "input": 0,
+      "valid": true,
+      "expected": 0
+    },
+    {
+      "id": "ttl.default",
+      "kind": "ttl",
+      "input": 300,
+      "valid": true,
+      "expected": 300
+    },
+    {
+      "id": "ttl.max",
+      "kind": "ttl",
+      "input": 2147483647,
+      "valid": true,
+      "expected": 2147483647
+    },
+    {
+      "id": "ttl.negative",
+      "kind": "ttl",
+      "input": -1,
+      "valid": false
+    },
+    {
+      "id": "ttl.over-max",
+      "kind": "ttl",
+      "input": 2147483648,
+      "valid": false
+    },
+    {
+      "id": "ttl.float",
+      "kind": "ttl",
+      "input": 300.5,
+      "valid": false
+    },
+    {
+      "id": "ttl.numeric-string",
+      "kind": "ttl",
+      "input": "300",
+      "valid": false
+    },
+    {
+      "id": "ttl.boolean",
+      "kind": "ttl",
+      "input": true,
+      "valid": false
+    },
+    {
+      "id": "ttl.null",
+      "kind": "ttl",
+      "input": null,
+      "valid": false
+    },
+    {
+      "id": "txt.spf",
+      "kind": "txt",
+      "input": "v=spf1 include:example.net -all",
+      "valid": true,
+      "expected": "v=spf1 include:example.net -all"
+    },
+    {
+      "id": "txt.outer-whitespace",
+      "kind": "txt",
+      "input": "  hello world  ",
+      "valid": true,
+      "expected": "hello world"
+    },
+    {
+      "id": "txt.inner-quotes-kept",
+      "kind": "txt",
+      "input": "say \"hi\"",
+      "valid": true,
+      "expected": "say \"hi\""
+    },
+    {
+      "id": "txt.length-1024",
+      "kind": "txt",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "valid": true,
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "txt.length-1025",
+      "kind": "txt",
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "valid": false
+    },
+    {
+      "id": "txt.newline",
+      "kind": "txt",
+      "input": "line1\nline2",
+      "valid": false
+    },
+    {
+      "id": "txt.tab",
+      "kind": "txt",
+      "input": "tab\there",
+      "valid": false
+    },
+    {
+      "id": "txt.empty",
+      "kind": "txt",
+      "input": "",
+      "valid": false
+    },
+    {
+      "id": "mx.normalizes-exchange",
+      "kind": "mx",
+      "input": {
+        "priority": 10,
+        "exchange": "Mail.Example.com."
+      },
+      "valid": true,
+      "expected": {
+        "priority": 10,
+        "exchange": "mail.example.com"
+      }
+    },
+    {
+      "id": "mx.priority-0",
+      "kind": "mx",
+      "input": {
+        "priority": 0,
+        "exchange": "mail.example.net"
+      },
+      "valid": true,
+      "expected": {
+        "priority": 0,
+        "exchange": "mail.example.net"
+      }
+    },
+    {
+      "id": "mx.priority-65535",
+      "kind": "mx",
+      "input": {
+        "priority": 65535,
+        "exchange": "mail.example.net"
+      },
+      "valid": true,
+      "expected": {
+        "priority": 65535,
+        "exchange": "mail.example.net"
+      }
+    },
+    {
+      "id": "mx.priority-65536",
+      "kind": "mx",
+      "input": {
+        "priority": 65536,
+        "exchange": "mail.example.net"
+      },
+      "valid": false
+    },
+    {
+      "id": "mx.priority-negative",
+      "kind": "mx",
+      "input": {
+        "priority": -1,
+        "exchange": "mail.example.net"
+      },
+      "valid": false
+    },
+    {
+      "id": "mx.priority-string",
+      "kind": "mx",
+      "input": {
+        "priority": "10",
+        "exchange": "mail.example.net"
+      },
+      "valid": false
+    },
+    {
+      "id": "mx.exchange-single-label",
+      "kind": "mx",
+      "input": {
+        "priority": 10,
+        "exchange": "mail"
+      },
+      "valid": false
+    },
+    {
+      "id": "mx.missing-exchange",
+      "kind": "mx",
+      "input": {
+        "priority": 10
+      },
+      "valid": false
+    },
+    {
+      "id": "mx.unknown-key",
+      "kind": "mx",
+      "input": {
+        "priority": 10,
+        "exchange": "mail.example.net",
+        "weight": 1
+      },
+      "valid": false
+    },
+    {
+      "id": "srv.simple",
+      "kind": "srv",
+      "input": {
+        "priority": 10,
+        "weight": 5,
+        "port": 443,
+        "target": "service.example.net"
+      },
+      "valid": true,
+      "expected": {
+        "priority": 10,
+        "weight": 5,
+        "port": 443,
+        "target": "service.example.net"
+      }
+    },
+    {
+      "id": "srv.root-target",
+      "kind": "srv",
+      "input": {
+        "priority": 0,
+        "weight": 0,
+        "port": 0,
+        "target": "."
+      },
+      "valid": true,
+      "expected": {
+        "priority": 0,
+        "weight": 0,
+        "port": 0,
+        "target": "."
+      }
+    },
+    {
+      "id": "srv.port-65535",
+      "kind": "srv",
+      "input": {
+        "priority": 1,
+        "weight": 1,
+        "port": 65535,
+        "target": "Sip.Example.COM."
+      },
+      "valid": true,
+      "expected": {
+        "priority": 1,
+        "weight": 1,
+        "port": 65535,
+        "target": "sip.example.com"
+      }
+    },
+    {
+      "id": "srv.port-70000",
+      "kind": "srv",
+      "input": {
+        "priority": 10,
+        "weight": 5,
+        "port": 70000,
+        "target": "service.example.net"
+      },
+      "valid": false
+    },
+    {
+      "id": "srv.weight-string",
+      "kind": "srv",
+      "input": {
+        "priority": 10,
+        "weight": "5",
+        "port": 443,
+        "target": "service.example.net"
+      },
+      "valid": false
+    },
+    {
+      "id": "srv.empty-target",
+      "kind": "srv",
+      "input": {
+        "priority": 10,
+        "weight": 5,
+        "port": 443,
+        "target": ""
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.issue",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      }
+    },
+    {
+      "id": "caa.tag-uppercase",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "ISSUE",
+        "value": "letsencrypt.org"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      }
+    },
+    {
+      "id": "caa.issuewild-critical",
+      "kind": "caa",
+      "input": {
+        "flags": 128,
+        "tag": "issuewild",
+        "value": "example.net"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 128,
+        "tag": "issuewild",
+        "value": "example.net"
+      }
+    },
+    {
+      "id": "caa.iodef-mailto",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "iodef",
+        "value": "mailto:security@example.com"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 0,
+        "tag": "iodef",
+        "value": "mailto:security@example.com"
+      }
+    },
+    {
+      "id": "caa.iodef-https",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "iodef",
+        "value": "https://example.com/caa-report"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 0,
+        "tag": "iodef",
+        "value": "https://example.com/caa-report"
+      }
+    },
+    {
+      "id": "caa.value-255",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "valid": true,
+      "expected": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "caa.flags-256",
+      "kind": "caa",
+      "input": {
+        "flags": 256,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.unknown-tag",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "contactemail",
+        "value": "letsencrypt.org"
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.iodef-not-url",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "iodef",
+        "value": "example.com"
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.empty-value",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "issue",
+        "value": ""
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.value-256",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "valid": false
+    },
+    {
+      "id": "caa.non-ascii-value",
+      "kind": "caa",
+      "input": {
+        "flags": 0,
+        "tag": "issue",
+        "value": "café.example.com"
+      },
+      "valid": false
+    }
+  ]
+}

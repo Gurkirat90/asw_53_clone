@@ -44,7 +44,7 @@ from app.db.migrations import alembic_config, sqlite_file_path  # noqa: E402
 from app.db.session import build_engine, build_session_factory  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.models import User  # noqa: E402
-from app.tests.helpers import DEFAULT_PASSWORD, UserFactory  # noqa: E402
+from app.tests.helpers import DEFAULT_PASSWORD, UserFactory, login_client  # noqa: E402
 
 DEVELOPER_DB = (BACKEND_DIR / "data" / "route53_clone.db").resolve()
 
@@ -145,3 +145,20 @@ def create_user(db: Session) -> UserFactory:
         return user
 
     return _create_user
+
+
+@pytest.fixture
+def auth_client(client: TestClient, create_user: UserFactory) -> TestClient:
+    """The default client, signed in as user@example.com."""
+    create_user("user@example.com")
+    login_client(client, "user@example.com")
+    return client
+
+
+@pytest.fixture
+def other_client(app: FastAPI, create_user: UserFactory) -> Iterator[TestClient]:
+    """A second, independent client signed in as a different user."""
+    create_user("other@example.com")
+    with TestClient(app) as second:
+        login_client(second, "other@example.com")
+        yield second

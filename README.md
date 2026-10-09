@@ -11,10 +11,11 @@ data persisted in SQLite through a FastAPI API.
 > propagates records, contacts AWS, provisions resources, or implements real IAM, Organizations, or
 > billing. Login is a local mock.
 
-**Current status (Phase 02, persistence and mock authentication):** SQLite schema and Alembic
-migrations for all five tables, a standardized error/request-ID framework, and the session-based
-mock login API (`/api/v1/auth/login`, `/logout`, `/me`). The frontend is still the Phase 01 smoke
-page; hosted zones, records, and the console UI arrive in later phases. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
+**Current status (Phase 03, hosted zone and record APIs):** the complete backend: SQLite schema
+and migrations, mock session authentication, and the owner-scoped REST API for hosted zones and
+DNS records (A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, CAA) with validation, system NS/SOA records,
+search, filters, sorting, and pagination. The frontend is still the Phase 01 smoke page; the
+console UI arrives in later phases. Requirements: [docs/PRD.md](docs/PRD.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Tech stack
 
@@ -82,6 +83,16 @@ refuses to start against a missing or unmigrated database. `make seed` is idempo
 the demo user if missing and never changes an existing password unless you run
 `make seed SEED_ARGS=--reset-password`.
 
+Optionally load demo data (requires the demo user):
+
+```bash
+make seed-demo-data
+```
+
+It creates `example.com` (one record of each of the nine types plus `app-01`…`app-12` A records,
+enough to page through), `example.net`, and the private zone `internal.example.com`, all with
+reserved documentation names and addresses. It does nothing if the demo user already has zones.
+
 `API_INTERNAL_BASE_URL` (frontend) is the server-side target of the `/api/*` rewrite. Next.js
 resolves rewrites at **build time**, so set it before `npm run build` when the API is not at
 `http://127.0.0.1:8000`.
@@ -106,7 +117,7 @@ development), and `http://localhost:3000/api/v1/...` is proxied to it.
 | `make setup` | Create venv, install backend and frontend dependencies | Working |
 | `make migrate` | `alembic upgrade head` against `DATABASE_URL` (creates `backend/data/`) | Working |
 | `make seed` | Create the demo user if missing (`SEED_ARGS=--reset-password` resets its password) | Working |
-| `make seed-demo-data` | Load demo zones and records | Not implemented until PROMPT 03 (exits 1) |
+| `make seed-demo-data` | Load demo zones and records for the demo user (skips if it already has zones) | Working |
 | `make backend-run` | Uvicorn on 127.0.0.1:8000, single worker, auto-reload | Working |
 | `make frontend-run` | Next.js dev server on port 3000 | Working |
 | `make backend-lint` | `ruff check` + `ruff format --check` | Working |
@@ -130,7 +141,11 @@ Backend operator commands: `cd backend && .venv/bin/python -m app.cli --help`.
   Coverage: migrations (upgrade/downgrade/upgrade, constraints, indexes), foreign keys and
   cascades, UTC timestamps, login/logout/me (cookie attributes, hashed tokens, expired, revoked,
   garbage and inactive-user sessions), the error envelope and request IDs, the Origin check,
-  startup refusal on an unmigrated database, `/healthz`, and the seed command.
+  startup refusal on an unmigrated database, `/healthz`, the seed commands, the hosted-zone and
+  record APIs (all nine types, validation paths, conflicts, system-record protection, cross-user
+  and cross-zone 404s, search/filter/sort/pagination, cascade deletes, rollback on failure,
+  persistence across app instances, no N+1 queries), and the shared DNS validation fixture
+  `shared/dns-validation-cases.json`, which the frontend will run too.
 - Frontend: `make frontend-test` runs Vitest with jsdom (`frontend/tests/`).
 - CI (`.github/workflows/ci.yml`) runs the same lint, typecheck, test, and build steps on every
   push to `main` and on pull requests.
@@ -147,18 +162,23 @@ exclusively by Alembic migrations. Details: [docs/DATABASE.md](docs/DATABASE.md)
 
 ## API overview
 
-Base path `/api/v1`; health check `GET /healthz` (`{"status":"ok","database":"ok"}`, or `503`).
-Implemented so far:
+JSON REST API under `/api/v1` (health check: `GET /healthz`). Full contract, examples, value
+shapes, and validation rules: [docs/API.md](docs/API.md). Interactive OpenAPI docs are served at
+http://127.0.0.1:8000/docs in development.
 
-| Method + path | Result |
+| Method + path | Purpose |
 |---|---|
-| `POST /api/v1/auth/login` | `200` user summary + HttpOnly `route53_session` cookie; `401 AUTHENTICATION_FAILED`; `422 VALIDATION_ERROR` |
-| `POST /api/v1/auth/logout` | `204`; revokes the session and clears the cookie |
-| `GET /api/v1/auth/me` | `200` user summary; `401 UNAUTHENTICATED` |
+| `POST /api/v1/auth/login` / `POST /api/v1/auth/logout` / `GET /api/v1/auth/me` | Mock session login (HttpOnly cookie), logout, current user |
+| `GET /api/v1/hosted-zones` | List zones (`q`, `zone_type`, `page`, `page_size`, `sort_by`, `sort_order`) |
+| `POST /api/v1/hosted-zones` | Create a zone (with system NS and SOA records) |
+| `GET` / `PATCH` / `DELETE /api/v1/hosted-zones/{zone_id}` | Zone detail, edit comment, delete with all records |
+| `GET /api/v1/hosted-zones/{zone_id}/records` | List records (`q`, `record_type`, `routing_policy`, paging, sorting) |
+| `POST /api/v1/hosted-zones/{zone_id}/records` | Create an A, AAAA, CNAME, TXT, MX, NS, PTR, SRV, or CAA record |
+| `GET` / `PATCH` / `DELETE /api/v1/hosted-zones/{zone_id}/records/{record_id}` | Record detail, edit in place, delete (system records are protected) |
 
 Every error uses `{"error": {"code", "message", "details": [{"field", "message"}], "request_id"}}`
 and every response carries `X-Request-ID`. Unsafe requests (POST/PUT/PATCH/DELETE) whose `Origin`
-header is not in `TRUSTED_ORIGINS` get `403 FORBIDDEN`. Full reference: `docs/API.md` (PROMPT 03).
+header is not in `TRUSTED_ORIGINS` get `403 FORBIDDEN`.
 
 ## Deployment
 
